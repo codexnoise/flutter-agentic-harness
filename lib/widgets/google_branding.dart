@@ -90,3 +90,46 @@ class ColorTag extends StatelessWidget {
     );
   }
 }
+
+/// Fondo decorativo con círculos de los 4 colores de Google.
+class GoogleBubblesBackground extends StatelessWidget {
+  const GoogleBubblesBackground({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRect(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const ColoredBox(color: Colors.white),
+          _bubble(GoogleColors.blue, size: 120, right: -30, top: -50),
+          _bubble(GoogleColors.red, size: 70, right: 70, top: 30),
+          _bubble(GoogleColors.yellow, size: 90, right: 130, top: -45),
+          _bubble(GoogleColors.green, size: 56, right: 18, bottom: -18),
+        ],
+      ),
+    );
+  }
+
+  Widget _bubble(
+    Color color, {
+    required double size,
+    double? right,
+    double? top,
+    double? bottom,
+  }) {
+    return Positioned(
+      right: right,
+      top: top,
+      bottom: bottom,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color.withValues(alpha: 0.22),
+        ),
+      ),
+    );
+  }
+}

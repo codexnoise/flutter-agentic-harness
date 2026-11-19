@@ -49,4 +49,8 @@ abstract final class GoogleColors {
 
   /// Variante clara para fondos de etiquetas.
   static Color tint(Color color) => color.withValues(alpha: 0.14);
+
+  /// Fondo muy suave (opaco) del color, para superficies grandes.
+  static Color wash(Color color, [double amount = 0.08]) =>
+      Color.lerp(Colors.white, color, amount)!;
 }

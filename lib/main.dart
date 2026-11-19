@@ -74,7 +74,8 @@ class _HomePageState extends State<HomePage> {
           'DevFest',
           suffix: _tabIndex == 0 ? 'Agenda' : 'Mi agenda',
         ),
-        bottom: const GoogleColorStrip(),
+        flexibleSpace: const GoogleBubblesBackground(),
+        bottom: const GoogleColorStrip(height: 5),
       ),
       body: FutureBuilder<List<Session>>(
         future: _sessions,
@@ -105,6 +106,9 @@ class _HomePageState extends State<HomePage> {
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tabIndex,
+        indicatorColor: GoogleColors.tint(
+          _tabIndex == 0 ? GoogleColors.blue : GoogleColors.yellow,
+        ),
         onDestinationSelected: (i) => setState(() => _tabIndex = i),
         destinations: const [
           NavigationDestination(

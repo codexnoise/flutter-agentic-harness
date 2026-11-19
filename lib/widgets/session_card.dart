@@ -24,13 +24,18 @@ class SessionCard extends StatelessWidget {
     final accent = GoogleColors.forKey(session.tracks.first);
     return Card(
       clipBehavior: Clip.antiAlias,
+      color: GoogleColors.wash(accent, 0.07),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: accent.withValues(alpha: 0.35)),
+      ),
       child: InkWell(
         onTap: onTap,
         child: IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ColoredBox(color: accent, child: const SizedBox(width: 6)),
+              ColoredBox(color: accent, child: const SizedBox(width: 8)),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(14, 12, 4, 14),
@@ -39,12 +44,12 @@ class SessionCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          _TimeBadge(time: session.time),
+                          _TimeBadge(time: session.time, color: accent),
                           const SizedBox(width: 10),
-                          const Icon(
-                            Icons.place_outlined,
+                          Icon(
+                            Icons.place_rounded,
                             size: 16,
-                            color: Color(0xFF5F6368),
+                            color: GoogleColors.ink(accent),
                           ),
                           const SizedBox(width: 2),
                           Expanded(
@@ -52,7 +57,8 @@ class SessionCard extends StatelessWidget {
                               session.room,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: const Color(0xFF5F6368),
+                                color: GoogleColors.ink(accent),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -67,7 +73,7 @@ class SessionCard extends StatelessWidget {
                             ),
                             color: isFavorite
                                 ? GoogleColors.yellow
-                                : const Color(0xFF9AA0A6),
+                                : accent.withValues(alpha: 0.6),
                             onPressed: onToggleFavorite,
                           ),
                         ],
@@ -83,11 +89,23 @@ class SessionCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        session.speaker,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: const Color(0xFF5F6368),
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person_rounded,
+                            size: 16,
+                            color: GoogleColors.ink(accent),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              session.speaker,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: const Color(0xFF3C4043),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 10),
                       Wrap(
@@ -118,22 +136,25 @@ class SessionCard extends StatelessWidget {
 }
 
 class _TimeBadge extends StatelessWidget {
-  const _TimeBadge({required this.time});
+  const _TimeBadge({required this.time, required this.color});
 
   final String time;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: GoogleColors.blue,
+        color: color,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         time,
-        style: Theme.of(context).textTheme.labelLarge
-            ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+          color: GoogleColors.onColor(color),
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

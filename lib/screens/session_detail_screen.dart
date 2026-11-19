@@ -52,9 +52,12 @@ class SessionDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: GoogleColors.tint(accent),
-              borderRadius: BorderRadius.circular(20),
-              border: Border(left: BorderSide(color: accent, width: 6)),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [accent, Color.lerp(accent, Colors.white, 0.3)!],
+              ),
+              borderRadius: BorderRadius.circular(24),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,27 +66,40 @@ class SessionDetailScreen extends StatelessWidget {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    for (final track in session.tracks)
-                      ColorTag(label: track, color: GoogleColors.forKey(track)),
-                    ColorTag(
-                      label: session.level,
-                      color: GoogleColors.forLevel(session.level),
-                    ),
+                    for (final label in [...session.tracks, session.level])
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          label,
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: GoogleColors.ink(accent),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 14),
                 Text(
                   session.title,
                   style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF202124),
+                    fontWeight: FontWeight.w800,
+                    color: GoogleColors.onColor(accent),
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   session.speaker,
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: GoogleColors.ink(accent),
+                    color: GoogleColors.onColor(accent),
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
