@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../models/session.dart';
+import '../theme/google_colors.dart';
 import '../widgets/session_list.dart';
 
 class MyAgendaScreen extends StatelessWidget {
@@ -25,10 +26,21 @@ class MyAgendaScreen extends StatelessWidget {
           return const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Text(
-                'Todavía no tienes sesiones favoritas.\n'
-                'Toca la estrella de una sesión para agregarla.',
-                textAlign: TextAlign.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.star_outline_rounded,
+                    size: 64,
+                    color: GoogleColors.yellow,
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Todavía no tienes sesiones favoritas.\n'
+                    'Toca la estrella de una sesión para agregarla.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           );

@@ -1,6 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
 import '../models/session.dart';
+import '../theme/google_colors.dart';
 import '../widgets/session_list.dart';
 
 class AgendaScreen extends StatefulWidget {
@@ -56,16 +57,18 @@ class _AgendaScreenState extends State<AgendaScreen> {
         _ChipRow(
           label: 'Track',
           options: _tracks,
+          colorFor: GoogleColors.forKey,
           selected: _selectedTrack,
           onSelected: (v) => setState(() => _selectedTrack = v),
         ),
         _ChipRow(
           label: 'Nivel',
           options: _levels,
+          colorFor: GoogleColors.forLevel,
           selected: _selectedLevel,
           onSelected: (v) => setState(() => _selectedLevel = v),
         ),
-        const Divider(height: 1),
+        const SizedBox(height: 4),
         Expanded(
           child: filtered.isEmpty
               ? const Center(child: Text('No hay sesiones con esos filtros.'))
@@ -84,19 +87,21 @@ class _ChipRow extends StatelessWidget {
   const _ChipRow({
     required this.label,
     required this.options,
+    required this.colorFor,
     required this.selected,
     required this.onSelected,
   });
 
   final String label;
   final List<String> options;
+  final Color Function(String option) colorFor;
   final String? selected;
   final ValueChanged<String?> onSelected;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: 52,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -113,6 +118,18 @@ class _ChipRow extends StatelessWidget {
               child: FilterChip(
                 label: Text(option),
                 selected: option == selected,
+                selectedColor: colorFor(option),
+                labelStyle: TextStyle(
+                  color: option == selected
+                      ? GoogleColors.onColor(colorFor(option))
+                      : null,
+                  fontWeight: FontWeight.w600,
+                ),
+                side: BorderSide(
+                  color: option == selected
+                      ? colorFor(option)
+                      : const Color(0xFFDADCE0),
+                ),
                 onSelected: (isSelected) =>
                     onSelected(isSelected ? option : null),
               ),

@@ -6,7 +6,7 @@ void main() {
     await tester.pumpWidget(const DevFestAgendaApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Agenda DevFest'), findsOneWidget);
+    expect(find.text('DevFest Agenda', findRichText: true), findsOneWidget);
     expect(find.text('Mi agenda'), findsOneWidget);
   });
 }
