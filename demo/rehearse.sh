@@ -110,8 +110,9 @@ main() {
 
   local dir="$root" prompt setup="" t0
   case "$moment" in
-    a | c) prompt="$(read_prompt "$moment")" ;;
-    d) prompt="$(read_prompt d)"; setup="$(read_prompt d-setup)" ;;
+    # A, C y D arrancan con la app lanzada por el MCP en la misma sesión
+    # (el MCP solo ve las apps que lanzó él): primero setup.md, luego el prompt.
+    a | c | d) prompt="$(read_prompt "$moment")"; setup="$(read_prompt setup)" ;;
     b-sin | b-con) prompt="$(read_prompt b)"; dir="$(dirname "$root")/$(basename "$root")-${moment}" ;;
     *) echo "Uso: rehearse.sh <a|b-sin|b-con|c|d> [etiqueta]" >&2; exit 1 ;;
   esac

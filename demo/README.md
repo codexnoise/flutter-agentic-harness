@@ -16,10 +16,18 @@ Momento A y los criterios del Momento B, y el agente podría leerlos.
 
 | Momento | Pieza | Tag de inicio | Prompt | Qué debe pasar | Duración medida |
 |---|---|---|---|---|---|
-| **A** | Contexto (MCP) | `demo-a-start` | `prompts/a.md` | `launch_app` → `get_runtime_errors` → `widget_inspector`; explica el `RenderFlex overflowed` apuntando al `Row` del título en `SessionCard`. No corrige. | _pendiente_ |
+| **A** | Contexto (MCP) | `demo-a-start` | `prompts/setup.md` + `prompts/a.md` | `launch_app` → `get_runtime_errors` → `widget_inspector`; explica el `RenderFlex overflowed` apuntando al `Row` del título en `SessionCard`. No corrige. | _pendiente_ |
 | **B** | Reglas (Rules + Skills) | `demo-b-start` | `prompts/b.md` | Mismo modelo y prompt, con y sin harness; se puntúa con `scorecard.md`. | _pendiente_ |
-| **C** | Iteración (Hot Reload) | `demo-a-start` | `prompts/c.md` | `flutter-fix-layout-issues` → edita → `hot_reload` → `get_runtime_errors` vacío → árbol de widgets. Sin reiniciar la app. | _pendiente_ |
-| **D** | Validación (Hooks + tests) | `demo-d-start` | `prompts/d-setup.md` + `prompts/d.md` | `flutter_driver_command` recorre la app → `flutter-add-integration-test` lo convierte en test en `integration_test/` → `run_tests` → Stop hook (analyze + tests). | _pendiente_ |
+| **C** | Iteración (Hot Reload) | `demo-a-start` | `prompts/setup.md` + `prompts/c.md` | `flutter-fix-layout-issues` → edita → `hot_reload` → `get_runtime_errors` vacío → árbol de widgets. Sin reiniciar la app. | _pendiente_ |
+| **D** | Validación (Hooks + tests) | `demo-d-start` | `prompts/setup.md` + `prompts/d.md` | `flutter_driver_command` recorre la app → `flutter-add-integration-test` lo convierte en test en `integration_test/` → `run_tests` → Stop hook (analyze + tests). | _pendiente_ |
+
+## Antes de A, C y D: lanzar la app desde la sesión
+
+El MCP solo ve (y solo puede hacer hot reload de) las apps que lanzó **en la misma sesión**
+con `launch_app`. Por eso A, C y D empiezan pegando `prompts/setup.md` antes del
+cronómetro. En los primeros ensayos, sin este paso, el agente de A diagnosticó leyendo el
+último commit y corriendo tests (sin mirar la app), y el de C no pudo hacer hot reload.
+En escena A y C van en la misma sesión: setup → A → C.
 
 ## Notas por momento
 
@@ -40,8 +48,7 @@ Plugins de usuario `superpowers` y `postman` desactivados durante las tomas.
 **C — la historia continúa.** Mismo estado que A. La app corre durante todo el momento:
 el agente edita, dispara `hot_reload` y vuelve a leer errores y árbol.
 
-**D — validación.** Antes del cronómetro se pega `prompts/d-setup.md` para que el agente
-lance la app con `launch_app` (el MCP solo ve apps lanzadas en la misma sesión).
+**D — validación.** Antes del cronómetro se pega `prompts/setup.md` (ver abajo).
 Flutter Driver necesita la extensión habilitada: lo configura el skill
 `flutter-add-integration-test` durante el momento; lo que cambie queda documentado aquí
 después del ensayo.
