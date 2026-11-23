@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../theme/google_colors.dart';
+import 'package:devfest_agenda/ui/core/theme/google_colors.dart';
 
 /// Texto con cada letra en uno de los 4 colores de Google.
 class GoogleWordmark extends StatelessWidget {

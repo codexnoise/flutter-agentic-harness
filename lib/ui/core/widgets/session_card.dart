@@ -1,8 +1,9 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../models/session.dart';
-import '../theme/google_colors.dart';
-import 'google_branding.dart';
+import 'package:devfest_agenda/domain/models/session.dart';
+import 'package:devfest_agenda/ui/core/theme/google_colors.dart';
+import 'package:devfest_agenda/ui/core/theme/track_colors.dart';
+import 'package:devfest_agenda/ui/core/widgets/google_branding.dart';
 
 class SessionCard extends StatelessWidget {
   const SessionCard({
@@ -21,7 +22,8 @@ class SessionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = GoogleColors.forKey(session.tracks.first);
+    final trackColors = TrackColors.of(context);
+    final accent = trackColors.colorFor(session.tracks.first);
     return Card(
       clipBehavior: Clip.antiAlias,
       color: GoogleColors.wash(accent, 0.07),
@@ -115,7 +117,7 @@ class SessionCard extends StatelessWidget {
                           for (final track in session.tracks)
                             ColorTag(
                               label: track,
-                              color: GoogleColors.forKey(track),
+                              color: trackColors.colorFor(track),
                             ),
                           ColorTag(
                             label: session.level,

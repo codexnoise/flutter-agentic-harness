@@ -1,34 +1,34 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../models/session.dart';
-import '../theme/google_colors.dart';
-import '../widgets/google_branding.dart';
+import 'package:devfest_agenda/domain/models/session.dart';
+import 'package:devfest_agenda/ui/core/theme/google_colors.dart';
+import 'package:devfest_agenda/ui/core/theme/track_colors.dart';
+import 'package:devfest_agenda/ui/core/widgets/google_branding.dart';
+import 'package:devfest_agenda/ui/features/agenda/view_models/agenda_view_model.dart';
 
 class SessionDetailScreen extends StatelessWidget {
   const SessionDetailScreen({
     super.key,
     required this.session,
-    required this.favorites,
-    required this.onToggleFavorite,
+    required this.viewModel,
   });
 
   final Session session;
-  final ValueNotifier<Set<String>> favorites;
-  final ValueChanged<Session> onToggleFavorite;
+  final AgendaViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = GoogleColors.forKey(session.tracks.first);
+    final accent = TrackColors.of(context).colorFor(session.tracks.first);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sesión'),
         bottom: const GoogleColorStrip(),
         actions: [
-          ValueListenableBuilder<Set<String>>(
-            valueListenable: favorites,
-            builder: (context, favoriteIds, _) {
-              final isFavorite = favoriteIds.contains(session.id);
+          ListenableBuilder(
+            listenable: viewModel,
+            builder: (context, _) {
+              final isFavorite = viewModel.isFavorite(session.id);
               return IconButton(
                 tooltip: isFavorite
                     ? 'Quitar de Mi agenda'
@@ -40,7 +40,7 @@ class SessionDetailScreen extends StatelessWidget {
                     ? GoogleColors.yellow
                     : const Color(0xFF5F6368),
                 iconSize: 28,
-                onPressed: () => onToggleFavorite(session),
+                onPressed: () => viewModel.toggleFavorite(session.id),
               );
             },
           ),

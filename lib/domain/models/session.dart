@@ -1,3 +1,4 @@
+/// Sesión de la agenda (modelo de dominio, inmutable).
 class Session {
   const Session({
     required this.id,
@@ -10,20 +11,6 @@ class Session {
     required this.lang,
     required this.illustrative,
   });
-
-  factory Session.fromJson(Map<String, dynamic> json) {
-    return Session(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      speaker: json['speaker'] as String,
-      track: json['track'] as String,
-      time: json['time'] as String,
-      room: json['room'] as String,
-      level: json['level'] as String,
-      lang: json['lang'] as String,
-      illustrative: json['illustrative'] as bool? ?? false,
-    );
-  }
 
   final String id;
   final String title;

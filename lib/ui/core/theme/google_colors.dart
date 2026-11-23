@@ -9,22 +9,8 @@ abstract final class GoogleColors {
 
   static const all = [blue, red, yellow, green];
 
-  static final Map<String, Color> _assigned = {};
-
-  /// Reparte los 4 colores en orden entre los tracks conocidos, para que
-  /// tracks distintos no terminen con el mismo color.
-  static void assignTracks(Iterable<String> tracks) {
-    _assigned.clear();
-    final sorted = tracks.toSet().toList()..sort();
-    for (var i = 0; i < sorted.length; i++) {
-      _assigned[sorted[i]] = all[i % all.length];
-    }
-  }
-
-  /// Color de un track: el asignado o, si no se conoce, uno estable por hash.
+  /// Color estable por hash para cualquier texto.
   static Color forKey(String key) {
-    final assigned = _assigned[key];
-    if (assigned != null) return assigned;
     var hash = 0;
     for (final unit in key.codeUnits) {
       hash = (hash * 31 + unit) & 0x7fffffff;

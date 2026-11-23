@@ -1,90 +1,56 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../models/session.dart';
-import '../theme/google_colors.dart';
-import '../widgets/session_list.dart';
+import 'package:devfest_agenda/ui/core/theme/google_colors.dart';
+import 'package:devfest_agenda/ui/core/theme/track_colors.dart';
+import 'package:devfest_agenda/ui/features/agenda/view_models/agenda_view_model.dart';
+import 'package:devfest_agenda/ui/features/agenda/views/session_list.dart';
 
-class AgendaScreen extends StatefulWidget {
-  const AgendaScreen({
-    super.key,
-    required this.sessions,
-    required this.favorites,
-    required this.onToggleFavorite,
-  });
+/// Agenda completa con los filtros por track y por nivel.
+class AgendaView extends StatelessWidget {
+  const AgendaView({super.key, required this.viewModel});
 
-  final List<Session> sessions;
-  final ValueNotifier<Set<String>> favorites;
-  final ValueChanged<Session> onToggleFavorite;
-
-  @override
-  State<AgendaScreen> createState() => _AgendaScreenState();
-}
-
-class _AgendaScreenState extends State<AgendaScreen> {
-  static const _levelOrder = ['Intro', 'Intermedio', 'Avanzado'];
-
-  String? _selectedTrack;
-  String? _selectedLevel;
-
-  List<String> get _tracks =>
-      widget.sessions.expand((s) => s.tracks).toSet().toList()..sort();
-
-  List<String> get _levels {
-    final levels = widget.sessions.map((s) => s.level).toSet().toList();
-    int rank(String level) {
-      final i = _levelOrder.indexOf(level);
-      return i == -1 ? _levelOrder.length : i;
-    }
-
-    levels.sort((a, b) {
-      final byRank = rank(a).compareTo(rank(b));
-      return byRank != 0 ? byRank : a.compareTo(b);
-    });
-    return levels;
-  }
-
-  List<Session> get _filtered => widget.sessions.where((s) {
-    final trackOk = _selectedTrack == null || s.tracks.contains(_selectedTrack);
-    final levelOk = _selectedLevel == null || s.level == _selectedLevel;
-    return trackOk && levelOk;
-  }).toList();
+  final AgendaViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filtered;
-    return Column(
-      children: [
-        _FilterPanel(
+    final trackColors = TrackColors.of(context);
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, _) {
+        final sessions = viewModel.filteredSessions;
+        return Column(
           children: [
-            _ChipRow(
-              label: 'Track',
-              labelColor: GoogleColors.blue,
-              options: _tracks,
-              colorFor: GoogleColors.forKey,
-              selected: _selectedTrack,
-              onSelected: (v) => setState(() => _selectedTrack = v),
+            _FilterPanel(
+              children: [
+                _ChipRow(
+                  label: 'Track',
+                  labelColor: GoogleColors.blue,
+                  options: viewModel.availableTracks,
+                  colorFor: trackColors.colorFor,
+                  selected: viewModel.filter.track,
+                  onSelected: viewModel.selectTrack,
+                ),
+                _ChipRow(
+                  label: 'Nivel',
+                  labelColor: GoogleColors.red,
+                  options: viewModel.availableLevels,
+                  colorFor: GoogleColors.forLevel,
+                  selected: viewModel.filter.level,
+                  onSelected: viewModel.selectLevel,
+                ),
+              ],
             ),
-            _ChipRow(
-              label: 'Nivel',
-              labelColor: GoogleColors.red,
-              options: _levels,
-              colorFor: GoogleColors.forLevel,
-              selected: _selectedLevel,
-              onSelected: (v) => setState(() => _selectedLevel = v),
+            const SizedBox(height: 6),
+            Expanded(
+              child: sessions.isEmpty
+                  ? const Center(
+                      child: Text('No hay sesiones con esos filtros.'),
+                    )
+                  : SessionList(sessions: sessions, viewModel: viewModel),
             ),
           ],
-        ),
-        const SizedBox(height: 6),
-        Expanded(
-          child: filtered.isEmpty
-              ? const Center(child: Text('No hay sesiones con esos filtros.'))
-              : SessionList(
-                  sessions: filtered,
-                  favorites: widget.favorites,
-                  onToggleFavorite: widget.onToggleFavorite,
-                ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

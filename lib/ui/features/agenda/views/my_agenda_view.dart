@@ -1,27 +1,21 @@
 import 'package:material_ui/material_ui.dart';
 
-import '../models/session.dart';
-import '../theme/google_colors.dart';
-import '../widgets/session_list.dart';
+import 'package:devfest_agenda/ui/core/theme/google_colors.dart';
+import 'package:devfest_agenda/ui/features/agenda/view_models/agenda_view_model.dart';
+import 'package:devfest_agenda/ui/features/agenda/views/session_list.dart';
 
-class MyAgendaScreen extends StatelessWidget {
-  const MyAgendaScreen({
-    super.key,
-    required this.sessions,
-    required this.favorites,
-    required this.onToggleFavorite,
-  });
+/// "Mi agenda": solo las sesiones marcadas como favoritas.
+class MyAgendaView extends StatelessWidget {
+  const MyAgendaView({super.key, required this.viewModel});
 
-  final List<Session> sessions;
-  final ValueNotifier<Set<String>> favorites;
-  final ValueChanged<Session> onToggleFavorite;
+  final AgendaViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<Set<String>>(
-      valueListenable: favorites,
-      builder: (context, favoriteIds, _) {
-        final mine = sessions.where((s) => favoriteIds.contains(s.id)).toList();
+    return ListenableBuilder(
+      listenable: viewModel,
+      builder: (context, _) {
+        final mine = viewModel.favoriteSessions;
         if (mine.isEmpty) {
           return const Center(
             child: Padding(
@@ -45,11 +39,7 @@ class MyAgendaScreen extends StatelessWidget {
             ),
           );
         }
-        return SessionList(
-          sessions: mine,
-          favorites: favorites,
-          onToggleFavorite: onToggleFavorite,
-        );
+        return SessionList(sessions: mine, viewModel: viewModel);
       },
     );
   }

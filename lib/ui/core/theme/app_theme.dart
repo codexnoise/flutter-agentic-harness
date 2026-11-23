@@ -1,6 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
-import 'google_colors.dart';
+import 'package:devfest_agenda/ui/core/theme/google_colors.dart';
 
 ThemeData buildAppTheme() {
   final scheme = ColorScheme.fromSeed(
