@@ -131,7 +131,7 @@ main() {
 
   echo "Prompt ($moment): $prompt"
   t0=$(date +%s)
-  run_claude "$dir" "$prompt" "$out/raw.jsonl" "${extra[@]}" || true
+  run_claude "$dir" "$prompt" "$out/raw.jsonl" ${extra[@]+"${extra[@]}"} || true
   summarize "$out/raw.jsonl" "$out" "$moment" "$label" "$(($(date +%s) - t0))"
   echo "Salida: $out"
 }
