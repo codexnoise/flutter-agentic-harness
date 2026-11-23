@@ -7,6 +7,10 @@ Para dejar el repo listo (desde cualquier estado):
 bash <(git show main:demo/reset.sh) <a|b|c|d>   # o demo/reset.sh <momento> desde main
 ```
 
+**En escena, abrir Claude Code sin memoria automática:** `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude`.
+La memoria del proyecto (en `~/.claude/projects/…`) guarda notas de la preparación de la
+demo y el agente puede leerlas.
+
 Los estados de demo **no incluyen** `SPEC.md` ni `demo/`: ambos describen el bug del
 Momento A y los criterios del Momento B, y el agente podría leerlos.
 

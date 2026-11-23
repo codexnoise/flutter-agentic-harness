@@ -25,7 +25,8 @@ ALLOWED_TOOLS=(
 run_claude() { # <dir> <prompt> <raw.jsonl> [extra args...]
   local dir="$1" prompt="$2" raw="$3"
   shift 3
-  (cd "$dir" && claude -p "$prompt" \
+  # Sin memoria automática: la del proyecto contiene notas del plan de la demo.
+  (cd "$dir" && CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude -p "$prompt" \
     --model "$MODEL" \
     --output-format stream-json --verbose --include-hook-events \
     --permission-mode acceptEdits \
