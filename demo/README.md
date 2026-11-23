@@ -34,14 +34,13 @@ En escena A y C van en la misma sesión: setup → A → C.
 **A — "que lea, no que adivine".** El bug es realista: alguien movió la estrella junto al
 título con un `Row(mainAxisAlignment: spaceBetween)` sin `Expanded`/`Flexible`
 (commit `feat: show the favorite star next to the session title`). Con títulos largos →
-`RenderFlex overflowed`. **El Stop hook va a disparar al final**: los widget tests de
-layout fallan con ese bug, así que el hook bloquea al agente aunque el prompt diga "solo
-diagnostica" y lo empuja a corregir. Es intencional y se cuenta como parte de la
-historia: el hook también vigila.
+`RenderFlex overflowed`. Los widget tests de layout fallan con ese bug, pero el Stop hook
+solo verifica cuando el agente cambió código: en el setup y en A (solo diagnóstico) no
+bloquea. En C, cuando el agente edita, sí exige analyze y tests en verde.
 
 **B — el misterio.** `reset.sh b` crea dos worktrees hermanos desde `demo-b-start`:
 `<repo>-b-sin` (sin harness) y `<repo>-b-con` (con `CLAUDE.md`, `.claude/` y `.mcp.json`
-de `stage-2-harness`). Correr `claude` en cada uno con el mismo prompt y puntuar con
+del harness final, el de `demo-d-start`). Correr `claude` en cada uno con el mismo prompt y puntuar con
 `demo/score-b.sh <worktree> <evidencia>`. 3 tomas por lado, todas reportadas.
 Plugins de usuario `superpowers` y `postman` desactivados durante las tomas.
 

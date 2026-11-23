@@ -9,7 +9,9 @@ Prompt (idéntico en todas las tomas): `demo/prompts/b.md`
 
 Punto de partida: `demo-b-start` (= `stage-1-base` sin `SPEC.md`), en dos worktrees
 creados por `demo/reset.sh b`. La única diferencia entre ambos es la presencia de
-`CLAUDE.md`, `.claude/` y `.mcp.json` copiados de `stage-2-harness`.
+`CLAUDE.md`, `.claude/` y `.mcp.json` del harness final (el de `demo-d-start`:
+`stage-2-harness` + el ajuste del Stop hook que solo verifica cuando hay cambios de código,
+hecho después de los primeros ensayos de A/C y antes de cualquier toma de B).
 
 ## Criterios
 

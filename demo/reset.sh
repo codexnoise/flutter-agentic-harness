@@ -11,7 +11,8 @@
 #   d     -> rama demo-run en demo-d-start (app de stage-3-app)
 #   b     -> dos worktrees hermanos desde demo-b-start:
 #              <repo>-b-sin  sin CLAUDE.md, .claude/ ni .mcp.json
-#              <repo>-b-con  + CLAUDE.md, .claude/ y .mcp.json de stage-2-harness
+#              <repo>-b-con  + CLAUDE.md, .claude/ y .mcp.json del harness final
+#                            (el de demo-d-start: stage-2-harness + Stop hook ajustado)
 #
 # Variables opcionales: DEMO_DEVICE (default "iPhone 17") para a/c/d.
 #
@@ -71,9 +72,9 @@ reset_b_worktrees() {
     git worktree add --quiet --detach "$wt" demo-b-start
   done
 
-  # Toma CON harness: las 3 piezas tal como quedaron en stage-2-harness.
+  # Toma CON harness: las 3 piezas del harness final (el mismo de A, C y D).
   wt="$parent/$name-b-con"
-  git archive stage-2-harness CLAUDE.md .claude .mcp.json | tar -x -C "$wt"
+  git archive demo-d-start CLAUDE.md .claude .mcp.json | tar -x -C "$wt"
   # Equivale a aprobar el MCP server del proyecto al abrir `claude`.
   printf '{\n  "enabledMcpjsonServers": ["dart"]\n}\n' >"$wt/.claude/settings.local.json"
 
