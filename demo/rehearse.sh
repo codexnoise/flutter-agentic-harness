@@ -11,7 +11,7 @@
 #
 # Salida: <git-common-dir>/demo-rehearsals/<momento>-<etiqueta>/
 #   (dentro de .git: sobrevive a los cambios de rama y no ensucia el árbol)
-#   raw.jsonl, summary.md, transcript.txt
+#   raw.jsonl, summary.md, transcript.txt (+ setup/ para A, C y D)
 #
 # Variables: DEMO_MODEL (default claude-opus-5-5).
 
@@ -22,22 +22,48 @@ ALLOWED_TOOLS=(
   "Bash(ls:*)" "Bash(cat:*)" "Bash(xcrun simctl:*)"
 )
 
-run_claude() { # <dir> <prompt> <raw.jsonl> [extra args...]
-  local dir="$1" prompt="$2" raw="$3"
-  shift 3
+run_session() { # <dir> <out_dir> <prompt1> [prompt2]
+  # Un solo proceso de claude para todos los prompts (entrada stream-json): así
+  # el MCP server sigue vivo entre el setup y el prompt del momento, y ve la app
+  # que lanzó. Cada respuesta se guarda en su propio archivo (setup / raw).
+  local dir="$1" out="$2"
+  shift 2
   # Sin memoria automática: la del proyecto contiene notas del plan de la demo.
-  (cd "$dir" && CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 claude -p "$prompt" \
-    --model "$MODEL" \
-    --output-format stream-json --verbose --include-hook-events \
-    --permission-mode acceptEdits \
-    --allowedTools "${ALLOWED_TOOLS[@]}" \
-    "$@" </dev/null >"$raw" 2>"$raw.err")
+  (cd "$dir" && CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 python3 -I - "$out" "$MODEL" "$@" \
+    -- "${ALLOWED_TOOLS[@]}" <<'PY'
+import json, subprocess, sys, time
+args = sys.argv[1:]
+sep = args.index("--")
+out, model, prompts, allowed = args[0], args[1], args[2:sep], args[sep + 1:]
+names = ["setup", "raw"] if len(prompts) == 2 else ["raw"]
+cmd = ["claude", "-p", "--model", model,
+       "--input-format", "stream-json", "--output-format", "stream-json",
+       "--verbose", "--include-hook-events", "--permission-mode", "acceptEdits",
+       "--allowedTools", *allowed]
+proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                        stderr=open(f"{out}/claude.err", "w"), text=True)
+walls = {}
+for name, prompt in zip(names, prompts):
+    t0 = time.time()
+    proc.stdin.write(json.dumps({"type": "user", "message": {"role": "user", "content": prompt}}) + "\n")
+    proc.stdin.flush()
+    with open(f"{out}/{name}.jsonl", "w") as f:
+        for line in proc.stdout:
+            f.write(line)
+            try:
+                if json.loads(line).get("type") == "result":
+                    break
+            except Exception:
+                pass
+    walls[name] = round(time.time() - t0)
+proc.stdin.close()
+proc.wait(timeout=120)
+json.dump(walls, open(f"{out}/walls.json", "w"))
+PY
+  )
 }
 
-session_id() { python3 -I -c 'import json,sys
-for l in open(sys.argv[1]):
-    m=json.loads(l)
-    if m.get("type")=="result": print(m.get("session_id","")); break' "$1"; }
+wall_of() { python3 -I -c 'import json,sys; print(json.load(open(sys.argv[1])).get(sys.argv[2],"?"))' "$1" "$2"; }
 
 summarize() { # <raw.jsonl> <out_dir> <moment> <label> <wall_seconds>
   python3 -I - "$@" <<'PY'
@@ -122,19 +148,15 @@ main() {
   fi
   [[ -d "$dir" ]] || { echo "No existe $dir (¿corriste reset.sh b?)" >&2; exit 1; }
 
-  local extra=()
+  echo "Prompt ($moment): $prompt"
   if [[ -n "$setup" ]]; then
     echo "Setup: $setup"
-    t0=$(date +%s)
-    run_claude "$dir" "$setup" "$out/setup.jsonl"
-    summarize "$out/setup.jsonl" "$out/setup" "$moment-setup" "$label" "$(($(date +%s) - t0))" >/dev/null
-    extra=(--resume "$(session_id "$out/setup.jsonl")")
+    run_session "$dir" "$out" "$setup" "$prompt" || true
+    summarize "$out/setup.jsonl" "$out/setup" "$moment-setup" "$label" "$(wall_of "$out/walls.json" setup)" >/dev/null
+  else
+    run_session "$dir" "$out" "$prompt" || true
   fi
-
-  echo "Prompt ($moment): $prompt"
-  t0=$(date +%s)
-  run_claude "$dir" "$prompt" "$out/raw.jsonl" ${extra[@]+"${extra[@]}"} || true
-  summarize "$out/raw.jsonl" "$out" "$moment" "$label" "$(($(date +%s) - t0))"
+  summarize "$out/raw.jsonl" "$out" "$moment" "$label" "$(wall_of "$out/walls.json" raw)"
   echo "Salida: $out"
 }
 
