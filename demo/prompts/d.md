@@ -1,1 +1,0 @@
-Recorre la app como un usuario: filtra por el track AI, abre una sesión, márcala como favorita y verifica que aparece en Mi agenda. Después convierte ese recorrido en un integration test y córrelo.
