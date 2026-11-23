@@ -64,6 +64,19 @@ class SessionCard extends StatelessWidget {
                               ),
                             ),
                           ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            session.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF202124),
+                            ),
+                          ),
                           IconButton(
                             tooltip: isFavorite
                                 ? 'Quitar de Mi agenda'
@@ -79,16 +92,6 @@ class SessionCard extends StatelessWidget {
                             onPressed: onToggleFavorite,
                           ),
                         ],
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: Text(
-                          session.title,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF202124),
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 4),
                       Row(
