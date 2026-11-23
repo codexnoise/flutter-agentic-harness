@@ -15,6 +15,14 @@ fi
 cd "${CLAUDE_PROJECT_DIR:-$(jq -r '.cwd' <<<"$input")}" || exit 0
 [[ -f pubspec.yaml ]] || exit 0
 
+# Solo se valida el trabajo del agente: si no hay cambios sin commit en código
+# Dart o en la configuración del paquete, no hay nada nuevo que verificar
+# (p. ej. un turno que solo lanza la app o solo diagnostica).
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1 &&
+  [[ -z "$(git status --porcelain -- '*.dart' pubspec.yaml pubspec.lock analysis_options.yaml)" ]]; then
+  exit 0
+fi
+
 failed=0
 summary=""
 
