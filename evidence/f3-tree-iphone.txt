@@ -1,0 +1,76 @@
+# Árbol de widgets (widget_inspector get_widget_tree, summaryOnly) — iPhone 17 (402 pt de ancho)
+# Recortado a los widgets relevantes para el layout; conteos del árbol completo al final.
+
+DevFestAgendaApp
+  MaterialApp
+    TrackColorsScope
+      HomePage
+        Scaffold
+          IndexedStack
+            AgendaView
+              Column
+                _FilterPanel
+                  Column
+                    _ChipRow
+                      ListView
+                        FilterChip
+                        FilterChip
+                        FilterChip
+                        FilterChip
+                        FilterChip
+                        FilterChip
+                        FilterChip
+                        FilterChip
+                    _ChipRow
+                      ListView
+                        FilterChip
+                        FilterChip
+                        FilterChip
+                Expanded
+                  SessionList
+                    LayoutBuilder
+                      ListView  (ListView-[<'session-list'>])
+                        SessionCard
+                          Card
+                            IntrinsicHeight
+                        SessionCard
+                          Card
+                            IntrinsicHeight
+                        SessionCard
+                          Card
+                            IntrinsicHeight
+                        SessionCard
+                          Card
+                            IntrinsicHeight
+                        SessionCard
+                          Card
+                            IntrinsicHeight
+            MyAgendaView
+              Column
+          AppBar
+            GoogleBubblesBackground
+            Column
+              GoogleWordmark
+              GoogleColorStrip
+                Row
+                  Expanded
+                  Expanded
+                  Expanded
+                  Expanded
+          NavigationBar
+            Row
+              Expanded
+                Row
+                  Expanded
+              Expanded
+                Row
+                  Expanded
+
+# Conteos (árbol completo devuelto por el MCP):
+#   SessionList: 1
+#   LayoutBuilder: 1
+#   ListView: 3
+#   _SessionGrid: 0
+#   IntrinsicHeight: 5
+#   SessionCard: 5
+#   FilterChip: 11
