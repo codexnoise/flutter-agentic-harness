@@ -49,3 +49,6 @@ app.*.map.json
 
 # FVM Version Cache
 .fvm/
+
+# Claude Code: per-user local settings (MCP approvals, etc.)
+.claude/settings.local.json
