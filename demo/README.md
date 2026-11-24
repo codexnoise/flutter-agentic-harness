@@ -1,5 +1,23 @@
 # Momentos de la demo
 
+## En escena (guía rápida)
+
+Una vez, en `~/.zshrc`:
+```bash
+alias demo='bash <(git -C ~/Documents/projects/flutter-agentic-harness show main:demo/go.sh)'
+```
+
+| Momento | Comando | En Claude |
+|---|---|---|
+| A + C | `demo ac` (antes de subir al escenario: resetea, abre Claude y lanza la app solo) | **A:** Cmd+V, Enter (ya está copiado). **C:** `demo copy c` en otra terminal → Cmd+V, Enter. |
+| D | `demo d` | Cmd+V, Enter. |
+| B | `demo b` (para grabar: abre dos ventanas, sin y con harness, con el mismo prompt) | Nada: el prompt ya va enviado. |
+
+Claude se abre sin memoria automática y con las tools de la demo preaprobadas, así que no
+pide permisos en escena.
+
+## Detalle
+
 Cada momento arranca desde un **tag** y tiene un **prompt exacto** en `demo/prompts/`.
 Para dejar el repo listo (desde cualquier estado):
 
