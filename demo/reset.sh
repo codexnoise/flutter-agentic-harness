@@ -14,7 +14,8 @@
 #              <repo>-b-con  + CLAUDE.md, .claude/ y .mcp.json del harness final
 #                            (el de demo-d-start: stage-2-harness + Stop hook ajustado)
 #
-# Variables opcionales: DEMO_DEVICE (default "iPhone 17") para a/c/d.
+# No toca el simulador ni la app: el presentador los levanta a mano DESPUÉS del
+# reset (fvm flutter run -d "iPhone 17"), para que la app corra el código del momento.
 #
 # Todo el script vive en funciones y se ejecuta al final: así bash lo lee
 # completo antes de que `git switch` cambie (o borre) este mismo archivo.
@@ -26,22 +27,6 @@ usage() {
 repo_root() {
   # Funciona también desde dentro de un worktree de B.
   dirname "$(git rev-parse --path-format=absolute --git-common-dir)"
-}
-
-boot_simulator() {
-  local name="${DEMO_DEVICE:-iPhone 17}" udid
-  udid="$(xcrun simctl list devices available | grep -F "    $name (" | head -n 1 |
-    sed -E 's/.*\(([0-9A-F-]{36})\).*/\1/')"
-  if [[ -z "$udid" ]]; then
-    echo "Aviso: no encontré el simulador '$name'." >&2
-    return 0
-  fi
-  xcrun simctl boot "$udid" 2>/dev/null || true # ya encendido = ok
-  xcrun simctl bootstatus "$udid" >/dev/null 2>&1 || true
-  xcrun simctl terminate "$udid" dev.codexnoise.devfestAgenda 2>/dev/null || true
-  local hub=/Applications/Xcode.app/Contents/Applications/DeviceHub.app
-  [[ -d "$hub" ]] && open -a "$hub" --args -CurrentDeviceUDID "$udid"
-  echo "Simulador: $name ($udid) encendido."
 }
 
 reset_demo_run() {
@@ -57,7 +42,6 @@ reset_demo_run() {
   rm -rf build
   fvm flutter pub get >/dev/null
   echo "Repo: rama demo-run en $tag ($(git rev-parse --short HEAD))."
-  boot_simulator
 }
 
 reset_b_worktrees() {

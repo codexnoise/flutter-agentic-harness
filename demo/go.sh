@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Un comando por momento, pensado para escena.
 #
-#   demo ac   resetea A/C y abre Claude. El prompt de A (que incluye lanzar
-#             la app) queda en el portapapeles: Cmd+V y Enter.
-#   demo d    resetea D, abre Claude y lanza la app (setup automático).
-#             Deja el prompt de D en el portapapeles: Cmd+V y Enter.
+#   demo ac   resetea el código de A/C y abre Claude. El prompt de A queda en el
+#             portapapeles. Antes de pegarlo, levanta la app a mano en otra
+#             terminal: fvm flutter run -d "iPhone 17"
+#   demo d    igual para D.
 #   demo b    resetea B y abre dos ventanas de Terminal (sin / con harness)
 #             con el mismo prompt ya enviado. Pensado para grabar.
 #   demo copy <a|b|c|d>   solo copia ese prompt al portapapeles.
@@ -30,15 +30,12 @@ main() {
       next="$( [[ $moment == ac ]] && echo a || echo d )"
       prompt "$next" | pbcopy
       echo
+      echo "▶ Prompt de $(tr a-z A-Z <<<"$next") copiado."
+      echo "  1. En otra terminal (en $repo):  fvm flutter run -d \"iPhone 17\""
+      echo "  2. Cuando la app esté corriendo: Cmd+V y Enter en Claude."
+      [[ $moment == ac ]] && echo "  Para C, después: demo copy c"
       cd "$repo"
-      if [[ $moment == ac ]]; then
-        # Sin setup: lanzar la app es parte de A (si no, el agente diagnostica
-        # el bug ya en el setup, antes de escena).
-        echo "▶ Prompt de A copiado: Cmd+V y Enter. Para C, después: demo copy c"
-        CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 exec claude --allowedTools "${ALLOWED[@]}"
-      fi
-      echo "▶ Prompt de D copiado: cuando la app esté corriendo, Cmd+V y Enter."
-      CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 exec claude --allowedTools "${ALLOWED[@]}" -- "$(prompt setup)"
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 exec claude --allowedTools "${ALLOWED[@]}"
       ;;
     b)
       reset b

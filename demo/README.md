@@ -7,11 +7,18 @@ Una vez, en `~/.zshrc`:
 alias demo='bash <(git -C ~/Documents/projects/flutter-agentic-harness show main:demo/go.sh)'
 ```
 
-| Momento | Comando | En Claude |
-|---|---|---|
-| A + C | `demo ac` (antes de subir al escenario: resetea y abre Claude) | **A:** Cmd+V, Enter (ya está copiado; el agente lanza la app). **C:** `demo copy c` en otra terminal → Cmd+V, Enter. |
-| D | `demo d` (resetea, abre Claude y lanza la app solo) | Cuando la app esté corriendo: Cmd+V, Enter. |
-| B | `demo b` (para grabar: abre dos ventanas, sin y con harness, con el mismo prompt) | Nada: el prompt ya va enviado. |
+Flujo por momento (el simulador y la app los levantas tú, siempre después del reset):
+
+| Momento | 1. Terminal A | 2. Terminal B | 3. En Claude |
+|---|---|---|---|
+| A + C | `demo ac` (resetea y abre Claude; copia el prompt de A) | `fvm flutter run -d "iPhone 17"` | **A:** Cmd+V, Enter. **C:** `demo copy c` → Cmd+V, Enter. |
+| D | `q` en la terminal de `flutter run`, luego `demo d` | `fvm flutter run -d "iPhone 17"` | Cmd+V, Enter. |
+| B | `demo b` (para grabar: dos ventanas, sin y con harness, con el mismo prompt) | — | Nada: el prompt ya va enviado. |
+
+Los prompts de A y D empiezan con *"Conéctate con el MCP de Dart a la app que está
+corriendo en el iPhone"*: el agente la encuentra por el Dart Tooling Daemon que levanta
+`flutter run`. Entre momentos hay que cortar `flutter run` (`q`) y volver a lanzarlo
+después del reset, para que la app corra el código del nuevo momento.
 
 Claude se abre sin memoria automática y con las tools de la demo preaprobadas, así que no
 pide permisos en escena.
@@ -34,23 +41,25 @@ Momento A y los criterios del Momento B, y el agente podría leerlos.
 
 | Momento | Pieza | Tag de inicio | Prompt | Qué debe pasar | Duración medida |
 |---|---|---|---|---|---|
-| **A** | Contexto (MCP) | `demo-a-start` | `prompts/a.md` (incluye lanzar la app) | `launch_app` → `get_runtime_errors` → `widget_inspector`; explica el `RenderFlex overflowed` apuntando al `Row` del título en `SessionCard`. No corrige. | _pendiente_ |
+| **A** | Contexto (MCP) | `demo-a-start` | `prompts/a.md` (app levantada a mano) | `dtd` connect → `get_runtime_errors` → `widget_inspector`; explica el `RenderFlex overflowed` apuntando al `Row` del título en `SessionCard`. No corrige. | _pendiente_ |
 | **B** | Reglas (Rules + Skills) | `demo-b-start` | `prompts/b.md` | Mismo modelo y prompt, con y sin harness; se puntúa con `scorecard.md`. | _pendiente_ |
 | **C** | Iteración (Hot Reload) | `demo-a-start` | `prompts/setup.md` + `prompts/c.md` | `flutter-fix-layout-issues` → edita → `hot_reload` → `get_runtime_errors` vacío → árbol de widgets. Sin reiniciar la app. | _pendiente_ |
-| **D** | Validación (Hooks + tests) | `demo-d-start` | `prompts/setup.md` + `prompts/d.md` | `flutter_driver_command` recorre la app → `flutter-add-integration-test` lo convierte en test en `integration_test/` → `run_tests` → Stop hook (analyze + tests). | _pendiente_ |
+| **D** | Validación (Hooks + tests) | `demo-d-start` | `prompts/d.md` (app levantada a mano) | `flutter_driver_command` recorre la app → `flutter-add-integration-test` lo convierte en test en `integration_test/` → `run_tests` → Stop hook (analyze + tests). | _pendiente_ |
 
-## Lanzar la app desde la sesión
+## La app la levanta el presentador
 
-El MCP solo ve (y solo puede hacer hot reload de) las apps que lanzó **en la misma sesión**
-con `launch_app`. En los primeros ensayos, sin la app lanzada, el agente de A diagnosticó
-leyendo el último commit y corriendo tests (sin mirar la app), y el de C no pudo hacer
-hot reload.
+El MCP puede conectarse a una app que levantaste tú con `fvm flutter run`: la encuentra con
+`dtd listDtdUris` y se conecta (probado en la prueba manual de A + C, 2026-11-24).
 
-- **A** lanza la app en su propio prompt. Un setup aparte no sirve: al lanzar la app el
-  agente lee `get_runtime_errors` por iniciativa propia y diagnostica el bug ya en el
-  setup, antes de escena (visto en la prueba manual del 2026-11-23).
-- **C** va en la misma sesión que A, con la app ya corriendo.
-- **D** empieza con `prompts/setup.md` (lo envía `demo d`): en D no hay bug que delatar.
+Historia de este flujo:
+- Primeros ensayos sin interfaz, con la app sin lanzar: el agente de A diagnosticó leyendo
+  el último commit y corriendo tests, y el de C no pudo hacer hot reload.
+- Un setup separado ("lanza la app") tampoco servía: al lanzarla, el agente leía
+  `get_runtime_errors` por iniciativa propia y diagnosticaba el bug antes de escena.
+- Por eso los prompts de A y D empiezan pidiendo conectarse a la app que ya corre.
+
+`prompts/setup.md` queda solo para los ensayos sin interfaz (`rehearse.sh`), donde no hay
+nadie que levante la app.
 
 ## Notas por momento
 
