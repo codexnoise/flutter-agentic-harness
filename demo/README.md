@@ -9,8 +9,8 @@ alias demo='bash <(git -C ~/Documents/projects/flutter-agentic-harness show main
 
 | Momento | Comando | En Claude |
 |---|---|---|
-| A + C | `demo ac` (antes de subir al escenario: resetea, abre Claude y lanza la app solo) | **A:** Cmd+V, Enter (ya está copiado). **C:** `demo copy c` en otra terminal → Cmd+V, Enter. |
-| D | `demo d` | Cmd+V, Enter. |
+| A + C | `demo ac` (antes de subir al escenario: resetea y abre Claude) | **A:** Cmd+V, Enter (ya está copiado; el agente lanza la app). **C:** `demo copy c` en otra terminal → Cmd+V, Enter. |
+| D | `demo d` (resetea, abre Claude y lanza la app solo) | Cuando la app esté corriendo: Cmd+V, Enter. |
 | B | `demo b` (para grabar: abre dos ventanas, sin y con harness, con el mismo prompt) | Nada: el prompt ya va enviado. |
 
 Claude se abre sin memoria automática y con las tools de la demo preaprobadas, así que no
@@ -34,18 +34,23 @@ Momento A y los criterios del Momento B, y el agente podría leerlos.
 
 | Momento | Pieza | Tag de inicio | Prompt | Qué debe pasar | Duración medida |
 |---|---|---|---|---|---|
-| **A** | Contexto (MCP) | `demo-a-start` | `prompts/setup.md` + `prompts/a.md` | `launch_app` → `get_runtime_errors` → `widget_inspector`; explica el `RenderFlex overflowed` apuntando al `Row` del título en `SessionCard`. No corrige. | _pendiente_ |
+| **A** | Contexto (MCP) | `demo-a-start` | `prompts/a.md` (incluye lanzar la app) | `launch_app` → `get_runtime_errors` → `widget_inspector`; explica el `RenderFlex overflowed` apuntando al `Row` del título en `SessionCard`. No corrige. | _pendiente_ |
 | **B** | Reglas (Rules + Skills) | `demo-b-start` | `prompts/b.md` | Mismo modelo y prompt, con y sin harness; se puntúa con `scorecard.md`. | _pendiente_ |
 | **C** | Iteración (Hot Reload) | `demo-a-start` | `prompts/setup.md` + `prompts/c.md` | `flutter-fix-layout-issues` → edita → `hot_reload` → `get_runtime_errors` vacío → árbol de widgets. Sin reiniciar la app. | _pendiente_ |
 | **D** | Validación (Hooks + tests) | `demo-d-start` | `prompts/setup.md` + `prompts/d.md` | `flutter_driver_command` recorre la app → `flutter-add-integration-test` lo convierte en test en `integration_test/` → `run_tests` → Stop hook (analyze + tests). | _pendiente_ |
 
-## Antes de A, C y D: lanzar la app desde la sesión
+## Lanzar la app desde la sesión
 
 El MCP solo ve (y solo puede hacer hot reload de) las apps que lanzó **en la misma sesión**
-con `launch_app`. Por eso A, C y D empiezan pegando `prompts/setup.md` antes del
-cronómetro. En los primeros ensayos, sin este paso, el agente de A diagnosticó leyendo el
-último commit y corriendo tests (sin mirar la app), y el de C no pudo hacer hot reload.
-En escena A y C van en la misma sesión: setup → A → C.
+con `launch_app`. En los primeros ensayos, sin la app lanzada, el agente de A diagnosticó
+leyendo el último commit y corriendo tests (sin mirar la app), y el de C no pudo hacer
+hot reload.
+
+- **A** lanza la app en su propio prompt. Un setup aparte no sirve: al lanzar la app el
+  agente lee `get_runtime_errors` por iniciativa propia y diagnostica el bug ya en el
+  setup, antes de escena (visto en la prueba manual del 2026-11-23).
+- **C** va en la misma sesión que A, con la app ya corriendo.
+- **D** empieza con `prompts/setup.md` (lo envía `demo d`): en D no hay bug que delatar.
 
 ## Notas por momento
 
