@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Un comando por momento, pensado para escena.
 #
-#   demo ac   resetea el código de A/C y abre Claude. El prompt de A queda en el
-#             portapapeles. Antes de pegarlo, levanta la app a mano en otra
-#             terminal: fvm flutter run -d "iPhone 17"
+#   demo ac   resetea el código de A/C y espera: levanta la app a mano en otra
+#             terminal (fvm flutter run -d "iPhone 17") y pulsa Enter. Se abre
+#             Claude con el prompt de A ya enviado.
 #   demo d    igual para D.
 #   demo b    resetea B y abre dos ventanas de Terminal (sin / con harness)
 #             con el mismo prompt ya enviado. Pensado para grabar.
@@ -11,6 +11,10 @@
 #
 # Instalar el alias una vez (en ~/.zshrc):
 #   alias demo='bash <(git -C ~/Documents/projects/flutter-agentic-harness show main:demo/go.sh)'
+
+# Estilo de respuesta en escena: se agrega al system prompt (no se ve en pantalla)
+# y vale para toda la sesión (A y C, o D).
+STAGE_STYLE='Estás en una demo en vivo frente a público. Responde en español, corto y preciso: 3 a 5 líneas como máximo, sin encabezados ni listas largas. Di qué encontraste o qué hiciste y dónde (archivo y widget), nada más. Limítate a esta app y a la tarea pedida: no ofrezcas extras, alternativas ni explicaciones generales. Termina siempre con una última línea que empiece con "Usé:" y liste, en orden, las tools del MCP de Dart (por ejemplo get_runtime_errors, widget_inspector, hot_reload) y los Agent Skills (por ejemplo flutter-fix-layout-issues) que usaste en esa respuesta.'
 
 # Tools permitidas sin preguntar (las mismas que usan los ensayos).
 ALLOWED=(Read Edit Write Glob Grep Skill TodoWrite mcp__dart
@@ -28,14 +32,14 @@ main() {
       local moment="$1" next
       reset "${moment:0:1}"
       next="$( [[ $moment == ac ]] && echo a || echo d )"
-      prompt "$next" | pbcopy
       echo
-      echo "▶ Prompt de $(tr a-z A-Z <<<"$next") copiado."
-      echo "  1. En otra terminal (en $repo):  fvm flutter run -d \"iPhone 17\""
-      echo "  2. Cuando la app esté corriendo: Cmd+V y Enter en Claude."
-      [[ $moment == ac ]] && echo "  Para C, después: demo copy c"
+      echo "▶ Código listo para el momento $(tr a-z A-Z <<<"$next")."
+      echo "  En otra terminal (en $repo):  fvm flutter run -d \"iPhone 17\""
+      read -r -p "  Cuando la app esté corriendo, pulsa Enter: abro Claude con el prompt de $(tr a-z A-Z <<<"$next")… " _
+      [[ $moment == ac ]] && echo "  Para C, después: demo copy c (y Cmd+V, Enter)."
       cd "$repo"
-      CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 exec claude --allowedTools "${ALLOWED[@]}"
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 exec claude --append-system-prompt "$STAGE_STYLE" \
+        --allowedTools "${ALLOWED[@]}" -- "$(prompt "$next")"
       ;;
     b)
       reset b

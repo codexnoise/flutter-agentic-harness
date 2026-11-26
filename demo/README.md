@@ -11,8 +11,8 @@ Flujo por momento (el simulador y la app los levantas tú, siempre después del 
 
 | Momento | 1. Terminal A | 2. Terminal B | 3. En Claude |
 |---|---|---|---|
-| A + C | `demo ac` (resetea y abre Claude; copia el prompt de A) | `fvm flutter run -d "iPhone 17"` | **A:** Cmd+V, Enter. **C:** `demo copy c` → Cmd+V, Enter. |
-| D | `q` en la terminal de `flutter run`, luego `demo d` | `fvm flutter run -d "iPhone 17"` | Cmd+V, Enter. |
+| A + C | `demo ac` (resetea y espera) | `fvm flutter run -d "iPhone 17"`; luego Enter en la terminal A | **A:** se abre con el prompt ya enviado. **C:** `demo copy c` → Cmd+V, Enter. |
+| D | `q` en la terminal de `flutter run`, luego `demo d` | `fvm flutter run -d "iPhone 17"`; luego Enter en la terminal A | Se abre con el prompt de D ya enviado. |
 | B | `demo b` (para grabar: dos ventanas, sin y con harness, con el mismo prompt) | — | Nada: el prompt ya va enviado. |
 
 Los prompts de A y D empiezan con *"Conéctate con el MCP de Dart a la app que está
@@ -20,8 +20,9 @@ corriendo en el iPhone"*: el agente la encuentra por el Dart Tooling Daemon que 
 `flutter run`. Entre momentos hay que cortar `flutter run` (`q`) y volver a lanzarlo
 después del reset, para que la app corra el código del nuevo momento.
 
-Claude se abre sin memoria automática y con las tools de la demo preaprobadas, así que no
-pide permisos en escena.
+Claude se abre sin memoria automática, con las tools de la demo preaprobadas (no pide
+permisos en escena) y con una instrucción de estilo en el system prompt: respuestas de 3 a
+5 líneas que terminan con una línea "Usé:" con las tools del MCP y los skills usados.
 
 ## Detalle
 
