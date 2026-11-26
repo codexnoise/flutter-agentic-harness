@@ -17,7 +17,7 @@ la fila tiene 336 px. Atribuido al último commit. No corrigió nada.
 
 Usé: get_runtime_errors (más la conexión por `dtd`).
 
-## C — Iteración (Agentic Hot Reload) · duración: pendiente de anotar
+## C — Iteración (Agentic Hot Reload) · 1 min 10 s
 
 Prompt:
 > Corrige el problema de la agenda en el iPhone y verifica que quedó bien, sin reiniciar la
