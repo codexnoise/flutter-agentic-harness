@@ -1,0 +1,5 @@
+00:00 +0: loading ~/Documents/projects/flutter-agentic-harness-b-con/test/two_pane_layout_test.dart
+00:00 +0: ~/Documents/projects/flutter-agentic-harness-b-con/test/two_pane_layout_test.dart: En pantallas anchas muestra Agenda y Mi agenda lado a lado
+00:00 +1: ~/Documents/projects/flutter-agentic-harness-b-con/test/two_pane_layout_test.dart: En pantallas anchas muestra Agenda y Mi agenda lado a lado
+00:00 +2: ~/Documents/projects/flutter-agentic-harness-b-con/test/two_pane_layout_test.dart: En pantallas angostas usa pestañas con NavigationBar
+00:00 +3: All tests passed!

@@ -1,0 +1,281 @@
+diff --git a/lib/main.dart b/lib/main.dart
+index b4b6632..9e2e3ae 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -10,6 +10,9 @@ import 'theme/app_theme.dart';
+ import 'theme/google_colors.dart';
+ import 'widgets/google_branding.dart';
+ 
++/// Ancho mínimo a partir del cual la agenda y Mi agenda se muestran lado a lado.
++const double wideLayoutMinWidth = 720;
++
+ void main() {
+   runApp(const DevFestAgendaApp());
+ }
+@@ -40,6 +43,9 @@ class _HomePageState extends State<HomePage> {
+   late final Future<List<Session>> _sessions = _loadSessions();
+   int _tabIndex = 0;
+ 
++  /// Conserva los filtros de la agenda al cambiar entre layouts.
++  final GlobalKey _agendaKey = GlobalKey();
++
+   Future<List<Session>> _loadSessions() async {
+     final raw = await rootBundle.loadString('assets/devfest_agenda.json');
+     final data = jsonDecode(raw) as List<dynamic>;
+@@ -68,59 +74,138 @@ class _HomePageState extends State<HomePage> {
+ 
+   @override
+   Widget build(BuildContext context) {
+-    return Scaffold(
+-      appBar: AppBar(
+-        title: GoogleWordmark(
+-          'DevFest',
+-          suffix: _tabIndex == 0 ? 'Agenda' : 'Mi agenda',
+-        ),
+-        flexibleSpace: const GoogleBubblesBackground(),
+-        bottom: const GoogleColorStrip(height: 5),
+-      ),
+-      body: FutureBuilder<List<Session>>(
+-        future: _sessions,
+-        builder: (context, snapshot) {
+-          if (snapshot.hasError) {
+-            return Center(child: Text('Error: ${snapshot.error}'));
+-          }
+-          if (!snapshot.hasData) {
+-            return const Center(child: CircularProgressIndicator());
+-          }
+-          final sessions = snapshot.data!;
+-          return IndexedStack(
+-            index: _tabIndex,
+-            children: [
+-              AgendaScreen(
++    return LayoutBuilder(
++      builder: (context, constraints) {
++        final isWide = constraints.maxWidth >= wideLayoutMinWidth;
++        return Scaffold(
++          appBar: AppBar(
++            title: GoogleWordmark(
++              'DevFest',
++              suffix: isWide || _tabIndex == 0 ? 'Agenda' : 'Mi agenda',
++            ),
++            flexibleSpace: const GoogleBubblesBackground(),
++            bottom: const GoogleColorStrip(height: 5),
++          ),
++          body: FutureBuilder<List<Session>>(
++            future: _sessions,
++            builder: (context, snapshot) {
++              if (snapshot.hasError) {
++                return Center(child: Text('Error: ${snapshot.error}'));
++              }
++              if (!snapshot.hasData) {
++                return const Center(child: CircularProgressIndicator());
++              }
++              final sessions = snapshot.data!;
++              final agenda = AgendaScreen(
++                key: _agendaKey,
+                 sessions: sessions,
+                 favorites: _favorites,
+                 onToggleFavorite: _toggleFavorite,
+-              ),
+-              MyAgendaScreen(
++              );
++              final myAgenda = MyAgendaScreen(
+                 sessions: sessions,
+                 favorites: _favorites,
+                 onToggleFavorite: _toggleFavorite,
+-              ),
+-            ],
+-          );
+-        },
+-      ),
+-      bottomNavigationBar: NavigationBar(
+-        selectedIndex: _tabIndex,
+-        indicatorColor: GoogleColors.tint(
+-          _tabIndex == 0 ? GoogleColors.blue : GoogleColors.yellow,
+-        ),
+-        onDestinationSelected: (i) => setState(() => _tabIndex = i),
+-        destinations: const [
+-          NavigationDestination(
+-            icon: Icon(Icons.event_note_outlined),
+-            selectedIcon: Icon(Icons.event_note, color: GoogleColors.blue),
+-            label: 'Agenda',
++              );
++              if (isWide) {
++                return Row(
++                  crossAxisAlignment: CrossAxisAlignment.stretch,
++                  children: [
++                    Expanded(flex: 3, child: agenda),
++                    const VerticalDivider(width: 1, thickness: 1),
++                    Expanded(
++                      flex: 2,
++                      child: _MyAgendaPane(
++                        favorites: _favorites,
++                        child: myAgenda,
++                      ),
++                    ),
++                  ],
++                );
++              }
++              return IndexedStack(
++                index: _tabIndex,
++                children: [agenda, myAgenda],
++              );
++            },
+           ),
+-          NavigationDestination(
+-            icon: Icon(Icons.star_outline_rounded),
+-            selectedIcon: Icon(Icons.star_rounded, color: GoogleColors.yellow),
+-            label: 'Mi agenda',
++          bottomNavigationBar: isWide
++              ? null
++              : NavigationBar(
++                  selectedIndex: _tabIndex,
++                  indicatorColor: GoogleColors.tint(
++                    _tabIndex == 0 ? GoogleColors.blue : GoogleColors.yellow,
++                  ),
++                  onDestinationSelected: (i) => setState(() => _tabIndex = i),
++                  destinations: const [
++                    NavigationDestination(
++                      icon: Icon(Icons.event_note_outlined),
++                      selectedIcon: Icon(
++                        Icons.event_note,
++                        color: GoogleColors.blue,
++                      ),
++                      label: 'Agenda',
++                    ),
++                    NavigationDestination(
++                      icon: Icon(Icons.star_outline_rounded),
++                      selectedIcon: Icon(
++                        Icons.star_rounded,
++                        color: GoogleColors.yellow,
++                      ),
++                      label: 'Mi agenda',
++                    ),
++                  ],
++                ),
++        );
++      },
++    );
++  }
++}
++
++/// Columna lateral de "Mi agenda" para pantallas anchas, con encabezado y
++/// contador de sesiones favoritas.
++class _MyAgendaPane extends StatelessWidget {
++  const _MyAgendaPane({required this.favorites, required this.child});
++
++  final ValueNotifier<Set<String>> favorites;
++  final Widget child;
++
++  @override
++  Widget build(BuildContext context) {
++    final theme = Theme.of(context);
++    return ColoredBox(
++      color: GoogleColors.wash(GoogleColors.yellow, 0.06),
++      child: Column(
++        crossAxisAlignment: CrossAxisAlignment.stretch,
++        children: [
++          Padding(
++            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
++            child: Row(
++              children: [
++                const Icon(Icons.star_rounded, color: GoogleColors.yellow),
++                const SizedBox(width: 8),
++                Expanded(
++                  child: Text(
++                    'Mi agenda',
++                    style: theme.textTheme.titleMedium?.copyWith(
++                      fontWeight: FontWeight.w800,
++                      color: GoogleColors.ink(GoogleColors.yellow),
++                    ),
++                  ),
++                ),
++                ValueListenableBuilder<Set<String>>(
++                  valueListenable: favorites,
++                  builder: (context, ids, _) => Text(
++                    ids.length == 1 ? '1 sesión' : '${ids.length} sesiones',
++                    style: theme.textTheme.labelLarge?.copyWith(
++                      color: const Color(0xFF5F6368),
++                    ),
++                  ),
++                ),
++              ],
++            ),
+           ),
++          Expanded(child: child),
+         ],
+       ),
+     );
+diff --git a/test/widget_test.dart b/test/widget_test.dart
+index b8bacf3..ad0f5ed 100644
+--- a/test/widget_test.dart
++++ b/test/widget_test.dart
+@@ -1,12 +1,68 @@
+ import 'package:devfest_agenda/main.dart';
++import 'package:flutter/services.dart';
+ import 'package:flutter_test/flutter_test.dart';
++import 'package:material_ui/material_ui.dart';
++
++void _setScreenSize(WidgetTester tester, Size size) {
++  tester.view.physicalSize = size;
++  tester.view.devicePixelRatio = 1;
++  addTearDown(tester.view.reset);
++}
+ 
+ void main() {
++  // rootBundle cachea el Future del asset; uno creado en el FakeAsync de un
++  // test anterior nunca completa en el siguiente, así que lo descartamos.
++  setUp(() => rootBundle.evict('assets/devfest_agenda.json'));
++
+   testWidgets('La app arranca y muestra la agenda', (tester) async {
++    _setScreenSize(tester, const Size(400, 800));
+     await tester.pumpWidget(const DevFestAgendaApp());
+     await tester.pumpAndSettle();
+ 
+     expect(find.text('DevFest Agenda', findRichText: true), findsOneWidget);
+     expect(find.text('Mi agenda'), findsOneWidget);
++    expect(find.byType(NavigationBar), findsOneWidget);
++  });
++
++  testWidgets('En pantallas anchas muestra agenda y Mi agenda lado a lado', (
++    tester,
++  ) async {
++    _setScreenSize(tester, const Size(1280, 800));
++    await tester.pumpWidget(const DevFestAgendaApp());
++    await tester.pumpAndSettle();
++
++    expect(find.byType(NavigationBar), findsNothing);
++    expect(find.text('Mi agenda'), findsOneWidget);
++    expect(find.text('0 sesiones'), findsOneWidget);
++    expect(
++      find.textContaining('Todavía no tienes sesiones favoritas'),
++      findsOneWidget,
++    );
++
++    await tester.tap(find.byTooltip('Agregar a Mi agenda').first);
++    await tester.pumpAndSettle();
++
++    expect(find.text('1 sesión'), findsOneWidget);
++    // La sesión aparece marcada en la agenda y también en Mi agenda.
++    expect(find.byTooltip('Quitar de Mi agenda'), findsNWidgets(2));
++  });
++
++  testWidgets('Los filtros se conservan al cambiar de layout', (tester) async {
++    _setScreenSize(tester, const Size(400, 800));
++    await tester.pumpWidget(const DevFestAgendaApp());
++    await tester.pumpAndSettle();
++
++    final firstChip = find.byType(FilterChip).first;
++    await tester.tap(firstChip);
++    await tester.pumpAndSettle();
++    expect(tester.widget<FilterChip>(firstChip).selected, isTrue);
++
++    _setScreenSize(tester, const Size(1280, 800));
++    await tester.pumpAndSettle();
++    expect(find.byType(NavigationBar), findsNothing);
++    expect(
++      tester.widget<FilterChip>(find.byType(FilterChip).first).selected,
++      isTrue,
++    );
+   });
+ }

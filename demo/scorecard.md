@@ -40,6 +40,32 @@ Notas:
 - Evidencia por toma en `evidence/b-sin-harness/<n>/` y `evidence/b-con-harness/<n>/`:
   `diff.patch`, `analyze.txt`, `test.txt`, `score.md`, `transcript.txt`.
 
-## Resultados
+## Resultados (2026-11-25)
 
-_(se completa después de correr las tomas)_
+Opus 5.5, `claude -p`, sin memoria automática, plugins de usuario desactivados. Puntaje
+automático de `demo/score-b.sh`, confirmado leyendo cada diff (criterios 1 y 2).
+
+| Toma | Lado | 1 Constraints | 2 Breakpoints | 3 Sin JSON en UI | 4 Widget test | 5 Analyze | 6 Tests | Puntaje | Duración | Turnos |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | sin | ❌ `MediaQuery.sizeOf` | ✅ `_wideBreakpoint` | ❌ | ✅ 2 | ✅ | ✅ | **4/6** | 181 s | 34 |
+| 1 | con | ✅ `LayoutBuilder` | ✅ `Breakpoints` | ✅ `AgendaRepository` | ✅ 3 | ✅ | ✅ | **6/6** | 125 s | 16 |
+| 2 | sin | ❌ `MediaQuery.sizeOf` | ✅ `wideLayoutMinWidth` | ❌ | ✅ 3 | ✅ | ✅ | **4/6** | 151 s | 30 |
+| 2 | con | ✅ `LayoutBuilder` | ✅ `Breakpoints` | ✅ `AgendaRepository` | ✅ 3 | ✅ | ✅ | **6/6** | 130 s | 17 |
+| 3 | sin | ✅ `LayoutBuilder` | ✅ `wideLayoutMinWidth` | ❌ | ✅ 2 | ✅ | ✅ | **5/6** | 142 s | 21 |
+| 3 | con | ✅ `LayoutBuilder` | ✅ `Breakpoints` | ✅ `AgendaRepository` | ✅ 2 | ✅ | ✅ | **6/6** | 94 s | 14 |
+
+**Promedio:** sin harness **4.3/6** (4, 4, 5) · con harness **6/6** (6, 6, 6).
+**Duración media:** sin 158 s · con 116 s. **Turnos medios:** sin 28 · con 16.
+
+Lectura honesta:
+- El modelo solo, sin harness, ya hace mucho bien: en las 3 tomas puso un breakpoint con
+  nombre, agregó widget tests y dejó analyze y tests en verde.
+- Lo que el harness cambia de forma consistente es lo que **nadie pidió en el prompt**:
+  separar los datos de la UI (sin harness: 0 de 3) y decidir el layout por constraints
+  (sin harness: 1 de 3; las otras 2 usaron `MediaQuery.sizeOf`).
+- Con harness el resultado es **estable** (6/6 las 3 veces) y además **más rápido y con menos
+  turnos**: las reglas le ahorran decisiones al agente.
+- Nota: el agente con harness consultó los skills leyendo `.claude/skills/*` directamente
+  (no con la tool `Skill`), así que el resumen de cada toma dice "skills: ninguno".
+
+Evidencia por toma: `evidence/b-sin-harness/<n>/` y `evidence/b-con-harness/<n>/`.

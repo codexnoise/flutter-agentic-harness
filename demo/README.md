@@ -44,7 +44,7 @@ Momento A y los criterios del Momento B, y el agente podría leerlos.
 | Momento | Pieza | Tag de inicio | Prompt | Qué debe pasar | Duración medida |
 |---|---|---|---|---|---|
 | **A** | Contexto (MCP) | `demo-a-start` | `prompts/a.md` (app levantada a mano) | `dtd` connect → `get_runtime_errors` → `widget_inspector`; explica el `RenderFlex overflowed` apuntando al `Row` del título en `SessionCard`. No corrige. | 19 s (manual, 2026-11-25) |
-| **B** | Reglas (Rules + Skills) | `demo-b-start` | `prompts/b.md` | Mismo modelo y prompt, con y sin harness; se puntúa con `scorecard.md`. | _pendiente_ |
+| **B** | Reglas (Rules + Skills) | `demo-b-start` | `prompts/b.md` | Mismo modelo y prompt, con y sin harness; se puntúa con `scorecard.md`. | sin 158 s · con 116 s de media (3 tomas por lado) |
 | **C** | Iteración (Hot Reload) | `demo-a-start` | `prompts/setup.md` + `prompts/c.md` | `flutter-fix-layout-issues` → edita → `hot_reload` → `get_runtime_errors` vacío → árbol de widgets. Sin reiniciar la app. | 1 min 10 s (manual, 2026-11-25) |
 | **D** | Validación (Hooks + tests) | `demo-d-start` | `prompts/d.md` (app levantada a mano) | `flutter_driver_command` recorre la app → `flutter-add-integration-test` lo convierte en test en `integration_test/` → `run_tests` → Stop hook (analyze + tests). | 4 min 29 s (manual, 2026-11-25) |
 

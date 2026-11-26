@@ -1,0 +1,418 @@
+diff --git a/lib/data/agenda_repository.dart b/lib/data/agenda_repository.dart
+new file mode 100644
+index 0000000..13010d3
+--- /dev/null
++++ b/lib/data/agenda_repository.dart
+@@ -0,0 +1,32 @@
++import 'dart:convert';
++
++import 'package:flutter/services.dart';
++
++import '../models/session.dart';
++
++/// Fuente única de las sesiones del DevFest (JSON local, sin red).
++class AgendaRepository {
++  AgendaRepository({AssetBundle? bundle}) : _bundle = bundle ?? rootBundle;
++
++  static const assetPath = 'assets/devfest_agenda.json';
++
++  final AssetBundle _bundle;
++  List<Session>? _cache;
++
++  /// Sesiones ordenadas por hora y, a igual hora, por título.
++  Future<List<Session>> loadSessions() async {
++    final cached = _cache;
++    if (cached != null) return cached;
++
++    final raw = await _bundle.loadString(assetPath);
++    final data = jsonDecode(raw) as List<dynamic>;
++    final sessions = data
++        .map((e) => Session.fromJson(e as Map<String, dynamic>))
++        .toList();
++    sessions.sort((a, b) {
++      final byTime = a.time.compareTo(b.time);
++      return byTime != 0 ? byTime : a.title.compareTo(b.title);
++    });
++    return _cache = List.unmodifiable(sessions);
++  }
++}
+diff --git a/lib/layout/breakpoints.dart b/lib/layout/breakpoints.dart
+new file mode 100644
+index 0000000..73bd4a3
+--- /dev/null
++++ b/lib/layout/breakpoints.dart
+@@ -0,0 +1,13 @@
++/// Breakpoints de layout de la app. Único lugar donde se definen.
++///
++/// Se comparan contra el ancho disponible que entrega `LayoutBuilder`,
++/// nunca contra el tamaño de pantalla ni el tipo de dispositivo.
++abstract final class Breakpoints {
++  /// Ancho mínimo para mostrar Agenda y Mi agenda lado a lado
++  /// (cubre iPad en vertical desde 744 pt).
++  static const double sideBySideMinWidth = 720;
++
++  /// Proporción de ancho Agenda : Mi agenda en el layout lado a lado.
++  static const int agendaPaneFlex = 3;
++  static const int myAgendaPaneFlex = 2;
++}
+diff --git a/lib/main.dart b/lib/main.dart
+index b4b6632..d899aa2 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -1,8 +1,7 @@
+-import 'dart:convert';
+-
+-import 'package:flutter/services.dart';
+ import 'package:material_ui/material_ui.dart';
+ 
++import 'data/agenda_repository.dart';
++import 'layout/breakpoints.dart';
+ import 'models/session.dart';
+ import 'screens/agenda_screen.dart';
+ import 'screens/my_agenda_screen.dart';
+@@ -11,11 +10,13 @@ import 'theme/google_colors.dart';
+ import 'widgets/google_branding.dart';
+ 
+ void main() {
+-  runApp(const DevFestAgendaApp());
++  runApp(DevFestAgendaApp(repository: AgendaRepository()));
+ }
+ 
+ class DevFestAgendaApp extends StatelessWidget {
+-  const DevFestAgendaApp({super.key});
++  const DevFestAgendaApp({super.key, required this.repository});
++
++  final AgendaRepository repository;
+ 
+   @override
+   Widget build(BuildContext context) {
+@@ -23,13 +24,15 @@ class DevFestAgendaApp extends StatelessWidget {
+       title: 'DevFest Agenda',
+       debugShowCheckedModeBanner: false,
+       theme: buildAppTheme(),
+-      home: const HomePage(),
++      home: HomePage(repository: repository),
+     );
+   }
+ }
+ 
+ class HomePage extends StatefulWidget {
+-  const HomePage({super.key});
++  const HomePage({super.key, required this.repository});
++
++  final AgendaRepository repository;
+ 
+   @override
+   State<HomePage> createState() => _HomePageState();
+@@ -41,16 +44,8 @@ class _HomePageState extends State<HomePage> {
+   int _tabIndex = 0;
+ 
+   Future<List<Session>> _loadSessions() async {
+-    final raw = await rootBundle.loadString('assets/devfest_agenda.json');
+-    final data = jsonDecode(raw) as List<dynamic>;
+-    final sessions = data
+-        .map((e) => Session.fromJson(e as Map<String, dynamic>))
+-        .toList();
++    final sessions = await widget.repository.loadSessions();
+     GoogleColors.assignTracks(sessions.expand((s) => s.tracks));
+-    sessions.sort((a, b) {
+-      final byTime = a.time.compareTo(b.time);
+-      return byTime != 0 ? byTime : a.title.compareTo(b.title);
+-    });
+     return sessions;
+   }
+ 
+@@ -68,58 +63,148 @@ class _HomePageState extends State<HomePage> {
+ 
+   @override
+   Widget build(BuildContext context) {
+-    return Scaffold(
+-      appBar: AppBar(
+-        title: GoogleWordmark(
+-          'DevFest',
+-          suffix: _tabIndex == 0 ? 'Agenda' : 'Mi agenda',
+-        ),
+-        flexibleSpace: const GoogleBubblesBackground(),
+-        bottom: const GoogleColorStrip(height: 5),
+-      ),
+-      body: FutureBuilder<List<Session>>(
+-        future: _sessions,
+-        builder: (context, snapshot) {
+-          if (snapshot.hasError) {
+-            return Center(child: Text('Error: ${snapshot.error}'));
+-          }
+-          if (!snapshot.hasData) {
+-            return const Center(child: CircularProgressIndicator());
+-          }
+-          final sessions = snapshot.data!;
+-          return IndexedStack(
+-            index: _tabIndex,
+-            children: [
+-              AgendaScreen(
++    return LayoutBuilder(
++      builder: (context, constraints) {
++        final sideBySide =
++            constraints.maxWidth >= Breakpoints.sideBySideMinWidth;
++        return Scaffold(
++          appBar: AppBar(
++            title: GoogleWordmark(
++              'DevFest',
++              suffix: sideBySide || _tabIndex == 0 ? 'Agenda' : 'Mi agenda',
++            ),
++            flexibleSpace: const GoogleBubblesBackground(),
++            bottom: const GoogleColorStrip(height: 5),
++          ),
++          body: FutureBuilder<List<Session>>(
++            future: _sessions,
++            builder: (context, snapshot) {
++              if (snapshot.hasError) {
++                return Center(child: Text('Error: ${snapshot.error}'));
++              }
++              if (!snapshot.hasData) {
++                return const Center(child: CircularProgressIndicator());
++              }
++              final sessions = snapshot.data!;
++              final agenda = AgendaScreen(
+                 sessions: sessions,
+                 favorites: _favorites,
+                 onToggleFavorite: _toggleFavorite,
+-              ),
+-              MyAgendaScreen(
++              );
++              final myAgenda = MyAgendaScreen(
+                 sessions: sessions,
+                 favorites: _favorites,
+                 onToggleFavorite: _toggleFavorite,
+-              ),
+-            ],
+-          );
+-        },
+-      ),
+-      bottomNavigationBar: NavigationBar(
+-        selectedIndex: _tabIndex,
+-        indicatorColor: GoogleColors.tint(
+-          _tabIndex == 0 ? GoogleColors.blue : GoogleColors.yellow,
+-        ),
+-        onDestinationSelected: (i) => setState(() => _tabIndex = i),
+-        destinations: const [
+-          NavigationDestination(
+-            icon: Icon(Icons.event_note_outlined),
+-            selectedIcon: Icon(Icons.event_note, color: GoogleColors.blue),
+-            label: 'Agenda',
++              );
++              if (sideBySide) {
++                return _SideBySideLayout(
++                  agenda: agenda,
++                  myAgenda: myAgenda,
++                  favorites: _favorites,
++                );
++              }
++              return IndexedStack(
++                index: _tabIndex,
++                children: [agenda, myAgenda],
++              );
++            },
+           ),
+-          NavigationDestination(
+-            icon: Icon(Icons.star_outline_rounded),
+-            selectedIcon: Icon(Icons.star_rounded, color: GoogleColors.yellow),
+-            label: 'Mi agenda',
++          bottomNavigationBar: sideBySide
++              ? null
++              : NavigationBar(
++                  selectedIndex: _tabIndex,
++                  indicatorColor: GoogleColors.tint(
++                    _tabIndex == 0 ? GoogleColors.blue : GoogleColors.yellow,
++                  ),
++                  onDestinationSelected: (i) => setState(() => _tabIndex = i),
++                  destinations: const [
++                    NavigationDestination(
++                      icon: Icon(Icons.event_note_outlined),
++                      selectedIcon: Icon(
++                        Icons.event_note,
++                        color: GoogleColors.blue,
++                      ),
++                      label: 'Agenda',
++                    ),
++                    NavigationDestination(
++                      icon: Icon(Icons.star_outline_rounded),
++                      selectedIcon: Icon(
++                        Icons.star_rounded,
++                        color: GoogleColors.yellow,
++                      ),
++                      label: 'Mi agenda',
++                    ),
++                  ],
++                ),
++        );
++      },
++    );
++  }
++}
++
++/// Agenda y Mi agenda lado a lado, para anchos grandes.
++class _SideBySideLayout extends StatelessWidget {
++  const _SideBySideLayout({
++    required this.agenda,
++    required this.myAgenda,
++    required this.favorites,
++  });
++
++  final Widget agenda;
++  final Widget myAgenda;
++  final ValueNotifier<Set<String>> favorites;
++
++  @override
++  Widget build(BuildContext context) {
++    return Row(
++      crossAxisAlignment: CrossAxisAlignment.stretch,
++      children: [
++        Expanded(flex: Breakpoints.agendaPaneFlex, child: agenda),
++        const VerticalDivider(width: 1),
++        Expanded(
++          flex: Breakpoints.myAgendaPaneFlex,
++          child: ColoredBox(
++            color: GoogleColors.wash(GoogleColors.yellow, 0.06),
++            child: Column(
++              crossAxisAlignment: CrossAxisAlignment.stretch,
++              children: [
++                _MyAgendaHeader(favorites: favorites),
++                Expanded(child: myAgenda),
++              ],
++            ),
++          ),
++        ),
++      ],
++    );
++  }
++}
++
++class _MyAgendaHeader extends StatelessWidget {
++  const _MyAgendaHeader({required this.favorites});
++
++  final ValueNotifier<Set<String>> favorites;
++
++  @override
++  Widget build(BuildContext context) {
++    final style = Theme.of(context).textTheme.titleMedium?.copyWith(
++      color: GoogleColors.ink(GoogleColors.yellow),
++      fontWeight: FontWeight.w800,
++    );
++    return Padding(
++      padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
++      child: Row(
++        children: [
++          const Icon(Icons.star_rounded, color: GoogleColors.yellow),
++          const SizedBox(width: 8),
++          Text('Mi agenda', style: style),
++          const Spacer(),
++          ValueListenableBuilder<Set<String>>(
++            valueListenable: favorites,
++            builder: (context, ids, _) => Text(
++              '${ids.length}',
++              key: const Key('my-agenda-count'),
++              style: style,
++            ),
+           ),
+         ],
+       ),
+diff --git a/test/widget_test.dart b/test/widget_test.dart
+index b8bacf3..356e078 100644
+--- a/test/widget_test.dart
++++ b/test/widget_test.dart
+@@ -1,12 +1,93 @@
++import 'package:devfest_agenda/data/agenda_repository.dart';
++import 'package:devfest_agenda/layout/breakpoints.dart';
+ import 'package:devfest_agenda/main.dart';
++import 'package:devfest_agenda/models/session.dart';
+ import 'package:flutter_test/flutter_test.dart';
++import 'package:material_ui/material_ui.dart';
++
++class _FakeAgendaRepository implements AgendaRepository {
++  @override
++  Future<List<Session>> loadSessions() async => const [
++    Session(
++      id: 'flutter',
++      title: 'Flutter adaptativo',
++      speaker: 'Ana',
++      track: 'Flutter',
++      time: '09:00',
++      room: 'Sala 1',
++      level: 'Intro',
++      lang: 'ES',
++      illustrative: false,
++    ),
++    Session(
++      id: 'cloud',
++      title: 'Cloud para todos',
++      speaker: 'Luis',
++      track: 'Cloud',
++      time: '10:00',
++      room: 'Sala 2',
++      level: 'Avanzado',
++      lang: 'ES',
++      illustrative: false,
++    ),
++  ];
++}
++
++Future<void> _pumpApp(WidgetTester tester, {required double width}) async {
++  tester.view.devicePixelRatio = 1;
++  tester.view.physicalSize = Size(width, 1000);
++  addTearDown(tester.view.reset);
++  await tester.pumpWidget(
++    DevFestAgendaApp(repository: _FakeAgendaRepository()),
++  );
++  await tester.pumpAndSettle();
++}
+ 
+ void main() {
+-  testWidgets('La app arranca y muestra la agenda', (tester) async {
+-    await tester.pumpWidget(const DevFestAgendaApp());
++  testWidgets('La app arranca con el JSON real y muestra la agenda', (
++    tester,
++  ) async {
++    await tester.pumpWidget(DevFestAgendaApp(repository: AgendaRepository()));
+     await tester.pumpAndSettle();
+ 
+     expect(find.text('DevFest Agenda', findRichText: true), findsOneWidget);
+     expect(find.text('Mi agenda'), findsOneWidget);
+   });
++
++  testWidgets('En ancho angosto usa pestañas para Mi agenda', (tester) async {
++    await _pumpApp(tester, width: Breakpoints.sideBySideMinWidth - 1);
++
++    expect(find.byType(NavigationBar), findsOneWidget);
++    expect(find.byKey(const Key('my-agenda-count')), findsNothing);
++  });
++
++  testWidgets('En ancho grande muestra Agenda y Mi agenda lado a lado', (
++    tester,
++  ) async {
++    await _pumpApp(tester, width: Breakpoints.sideBySideMinWidth);
++
++    expect(find.byType(NavigationBar), findsNothing);
++    expect(find.text('Flutter adaptativo'), findsOneWidget);
++    expect(
++      find.textContaining('Todavía no tienes sesiones favoritas'),
++      findsOneWidget,
++    );
++
++    await tester.tap(find.byTooltip('Agregar a Mi agenda').first);
++    await tester.pumpAndSettle();
++
++    // La sesión aparece en ambos paneles a la vez, sin cambiar de pestaña.
++    expect(find.text('Flutter adaptativo'), findsNWidgets(2));
++    expect(find.byTooltip('Quitar de Mi agenda'), findsNWidgets(2));
++    expect(
++      tester.widget<Text>(find.byKey(const Key('my-agenda-count'))).data,
++      '1',
++    );
++
++    // Quitarla desde Mi agenda también actualiza la Agenda.
++    await tester.tap(find.byTooltip('Quitar de Mi agenda').last);
++    await tester.pumpAndSettle();
++    expect(find.text('Flutter adaptativo'), findsOneWidget);
++    expect(find.byTooltip('Quitar de Mi agenda'), findsNothing);
++  });
+ }

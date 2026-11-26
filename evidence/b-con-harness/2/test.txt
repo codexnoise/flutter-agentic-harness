@@ -1,0 +1,5 @@
+00:00 +0: loading ~/Documents/projects/flutter-agentic-harness-b-con/test/widget_test.dart
+00:00 +0: La app arranca con el JSON real y muestra la agenda
+00:00 +1: En ancho angosto usa pestañas para Mi agenda
+00:00 +2: En ancho grande muestra Agenda y Mi agenda lado a lado
+00:01 +3: All tests passed!
