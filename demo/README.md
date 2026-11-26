@@ -21,8 +21,9 @@ corriendo en el iPhone"*: el agente la encuentra por el Dart Tooling Daemon que 
 después del reset, para que la app corra el código del nuevo momento.
 
 Claude se abre sin memoria automática, con las tools de la demo preaprobadas (no pide
-permisos en escena) y con una instrucción de estilo en el system prompt: respuestas de 3 a
-5 líneas que terminan con una línea "Usé:" con las tools del MCP y los skills usados.
+permisos en escena) y con una instrucción de estilo al inicio del primer mensaje (respuestas de
+3 a 5 líneas que terminan con una línea "Usé:" con las tools del MCP y los skills usados).
+`demo copy c` agrega un recordatorio corto de ese estilo al prompt de C.
 
 ## Detalle
 

@@ -12,9 +12,11 @@
 # Instalar el alias una vez (en ~/.zshrc):
 #   alias demo='bash <(git -C ~/Documents/projects/flutter-agentic-harness show main:demo/go.sh)'
 
-# Estilo de respuesta en escena: se agrega al system prompt (no se ve en pantalla)
-# y vale para toda la sesión (A y C, o D).
+# Estilo de respuesta en escena: va al inicio del primer mensaje (A o D) y vale
+# para toda la sesión. C lleva un recordatorio corto (STAGE_STYLE_SHORT).
 STAGE_STYLE='Estás en una demo en vivo frente a público. Responde en español, corto y preciso: 3 a 5 líneas como máximo, sin encabezados ni listas largas. Di qué encontraste o qué hiciste y dónde (archivo y widget), nada más. Limítate a esta app y a la tarea pedida: no ofrezcas extras, alternativas ni explicaciones generales. Termina siempre con una última línea que empiece con "Usé:" y liste, en orden, las tools del MCP de Dart (por ejemplo get_runtime_errors, widget_inspector, hot_reload) y los Agent Skills (por ejemplo flutter-fix-layout-issues) que usaste en esa respuesta.'
+
+STAGE_STYLE_SHORT='Responde corto y preciso (3 a 5 líneas) y termina con la línea "Usé:".'
 
 # Tools permitidas sin preguntar (las mismas que usan los ensayos).
 ALLOWED=(Read Edit Write Glob Grep Skill TodoWrite mcp__dart
@@ -38,8 +40,8 @@ main() {
       read -r -p "  Cuando la app esté corriendo, pulsa Enter: abro Claude con el prompt de $(tr a-z A-Z <<<"$next")… " _
       [[ $moment == ac ]] && echo "  Para C, después: demo copy c (y Cmd+V, Enter)."
       cd "$repo"
-      CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 exec claude --append-system-prompt "$STAGE_STYLE" \
-        --allowedTools "${ALLOWED[@]}" -- "$(prompt "$next")"
+      CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 exec claude --allowedTools "${ALLOWED[@]}" \
+        -- "$STAGE_STYLE"$'\n\n'"$(prompt "$next")"
       ;;
     b)
       reset b
@@ -58,7 +60,12 @@ main() {
       echo "▶ Abrí dos ventanas de Terminal: b-sin y b-con, con el mismo prompt."
       ;;
     copy)
-      prompt "${2:?Uso: demo copy <a|b|c|d>}" | pbcopy
+      local what="${2:?Uso: demo copy <a|b|c|d>}"
+      if [[ $what == c ]]; then
+        printf '%s %s' "$(prompt c)" "$STAGE_STYLE_SHORT" | pbcopy
+      else
+        prompt "$what" | pbcopy
+      fi
       echo "▶ Prompt de ${2} copiado."
       ;;
     *)
