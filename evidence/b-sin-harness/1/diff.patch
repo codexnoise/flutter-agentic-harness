@@ -1,0 +1,260 @@
+diff --git a/lib/main.dart b/lib/main.dart
+index b4b6632..2a6e66d 100644
+--- a/lib/main.dart
++++ b/lib/main.dart
+@@ -36,6 +36,14 @@ class HomePage extends StatefulWidget {
+ }
+ 
+ class _HomePageState extends State<HomePage> {
++  /// Ancho a partir del cual (tablet, Material 3 "expanded") la agenda y
++  /// Mi agenda se muestran lado a lado en lugar de en pestañas.
++  static const double _wideBreakpoint = 840;
++
++  // Las claves conservan el estado (filtros, scroll) al cambiar entre el
++  // layout de pestañas y el de dos paneles, p. ej. al rotar la tablet.
++  final _agendaKey = GlobalKey();
++  final _myAgendaKey = GlobalKey();
+   final ValueNotifier<Set<String>> _favorites = ValueNotifier(<String>{});
+   late final Future<List<Session>> _sessions = _loadSessions();
+   int _tabIndex = 0;
+@@ -68,11 +76,12 @@ class _HomePageState extends State<HomePage> {
+ 
+   @override
+   Widget build(BuildContext context) {
++    final isWide = MediaQuery.sizeOf(context).width >= _wideBreakpoint;
+     return Scaffold(
+       appBar: AppBar(
+         title: GoogleWordmark(
+           'DevFest',
+-          suffix: _tabIndex == 0 ? 'Agenda' : 'Mi agenda',
++          suffix: isWide || _tabIndex == 0 ? 'Agenda' : 'Mi agenda',
+         ),
+         flexibleSpace: const GoogleBubblesBackground(),
+         bottom: const GoogleColorStrip(height: 5),
+@@ -87,40 +96,106 @@ class _HomePageState extends State<HomePage> {
+             return const Center(child: CircularProgressIndicator());
+           }
+           final sessions = snapshot.data!;
+-          return IndexedStack(
+-            index: _tabIndex,
+-            children: [
+-              AgendaScreen(
+-                sessions: sessions,
+-                favorites: _favorites,
+-                onToggleFavorite: _toggleFavorite,
+-              ),
+-              MyAgendaScreen(
+-                sessions: sessions,
+-                favorites: _favorites,
+-                onToggleFavorite: _toggleFavorite,
+-              ),
+-            ],
++          final agenda = AgendaScreen(
++            key: _agendaKey,
++            sessions: sessions,
++            favorites: _favorites,
++            onToggleFavorite: _toggleFavorite,
++          );
++          final myAgenda = MyAgendaScreen(
++            key: _myAgendaKey,
++            sessions: sessions,
++            favorites: _favorites,
++            onToggleFavorite: _toggleFavorite,
+           );
++          if (isWide) {
++            return Row(
++              crossAxisAlignment: CrossAxisAlignment.stretch,
++              children: [
++                Expanded(flex: 3, child: agenda),
++                const VerticalDivider(width: 1, thickness: 1),
++                Expanded(
++                  flex: 2,
++                  child: _MyAgendaPane(favorites: _favorites, child: myAgenda),
++                ),
++              ],
++            );
++          }
++          return IndexedStack(index: _tabIndex, children: [agenda, myAgenda]);
+         },
+       ),
+-      bottomNavigationBar: NavigationBar(
+-        selectedIndex: _tabIndex,
+-        indicatorColor: GoogleColors.tint(
+-          _tabIndex == 0 ? GoogleColors.blue : GoogleColors.yellow,
+-        ),
+-        onDestinationSelected: (i) => setState(() => _tabIndex = i),
+-        destinations: const [
+-          NavigationDestination(
+-            icon: Icon(Icons.event_note_outlined),
+-            selectedIcon: Icon(Icons.event_note, color: GoogleColors.blue),
+-            label: 'Agenda',
+-          ),
+-          NavigationDestination(
+-            icon: Icon(Icons.star_outline_rounded),
+-            selectedIcon: Icon(Icons.star_rounded, color: GoogleColors.yellow),
+-            label: 'Mi agenda',
++      bottomNavigationBar: isWide
++          ? null
++          : NavigationBar(
++              selectedIndex: _tabIndex,
++              indicatorColor: GoogleColors.tint(
++                _tabIndex == 0 ? GoogleColors.blue : GoogleColors.yellow,
++              ),
++              onDestinationSelected: (i) => setState(() => _tabIndex = i),
++              destinations: const [
++                NavigationDestination(
++                  icon: Icon(Icons.event_note_outlined),
++                  selectedIcon: Icon(
++                    Icons.event_note,
++                    color: GoogleColors.blue,
++                  ),
++                  label: 'Agenda',
++                ),
++                NavigationDestination(
++                  icon: Icon(Icons.star_outline_rounded),
++                  selectedIcon: Icon(
++                    Icons.star_rounded,
++                    color: GoogleColors.yellow,
++                  ),
++                  label: 'Mi agenda',
++                ),
++              ],
++            ),
++    );
++  }
++}
++
++/// Panel lateral de Mi agenda en pantallas anchas: encabezado con el
++/// número de favoritas sobre la lista.
++class _MyAgendaPane extends StatelessWidget {
++  const _MyAgendaPane({required this.favorites, required this.child});
++
++  final ValueNotifier<Set<String>> favorites;
++  final Widget child;
++
++  @override
++  Widget build(BuildContext context) {
++    final textTheme = Theme.of(context).textTheme;
++    return ColoredBox(
++      color: GoogleColors.wash(GoogleColors.yellow, 0.06),
++      child: Column(
++        crossAxisAlignment: CrossAxisAlignment.stretch,
++        children: [
++          Padding(
++            padding: const EdgeInsets.fromLTRB(16, 14, 16, 6),
++            child: Row(
++              children: [
++                const Icon(Icons.star_rounded, color: GoogleColors.yellow),
++                const SizedBox(width: 8),
++                Text(
++                  'Mi agenda',
++                  style: textTheme.titleMedium?.copyWith(
++                    color: GoogleColors.ink(GoogleColors.yellow),
++                    fontWeight: FontWeight.w800,
++                  ),
++                ),
++                const Spacer(),
++                ValueListenableBuilder<Set<String>>(
++                  valueListenable: favorites,
++                  builder: (context, ids, _) => Text(
++                    ids.length == 1 ? '1 sesión' : '${ids.length} sesiones',
++                    style: textTheme.labelLarge,
++                  ),
++                ),
++              ],
++            ),
+           ),
++          Expanded(child: child),
+         ],
+       ),
+     );
+diff --git a/test/widget_test.dart b/test/widget_test.dart
+index b8bacf3..c5fd39b 100644
+--- a/test/widget_test.dart
++++ b/test/widget_test.dart
+@@ -1,7 +1,34 @@
+ import 'package:devfest_agenda/main.dart';
++import 'package:devfest_agenda/screens/agenda_screen.dart';
++import 'package:devfest_agenda/screens/my_agenda_screen.dart';
++import 'package:flutter/services.dart';
+ import 'package:flutter_test/flutter_test.dart';
++import 'package:material_ui/material_ui.dart';
+ 
+ void main() {
++  // rootBundle cachea el Future del asset; sin limpiarlo, un test reutiliza
++  // el Future creado en la zona de un test anterior y nunca completa.
++  setUp(rootBundle.clear);
++
++  void setScreenSize(WidgetTester tester, Size size) {
++    tester.view.physicalSize = size;
++    tester.view.devicePixelRatio = 1;
++    addTearDown(tester.view.reset);
++  }
++
++  /// Arranca la app y espera a que el JSON de la agenda (I/O real) cargue.
++  Future<void> pumpLoadedApp(WidgetTester tester) async {
++    await tester.pumpWidget(const DevFestAgendaApp());
++    for (var i = 0; i < 50; i++) {
++      if (find.byType(CircularProgressIndicator).evaluate().isEmpty) break;
++      await tester.runAsync(
++        () => Future<void>.delayed(const Duration(milliseconds: 20)),
++      );
++      await tester.pump();
++    }
++    await tester.pumpAndSettle();
++  }
++
+   testWidgets('La app arranca y muestra la agenda', (tester) async {
+     await tester.pumpWidget(const DevFestAgendaApp());
+     await tester.pumpAndSettle();
+@@ -9,4 +36,50 @@ void main() {
+     expect(find.text('DevFest Agenda', findRichText: true), findsOneWidget);
+     expect(find.text('Mi agenda'), findsOneWidget);
+   });
++
++  testWidgets('En teléfono, Agenda y Mi agenda van en pestañas', (
++    tester,
++  ) async {
++    setScreenSize(tester, const Size(400, 800));
++    await pumpLoadedApp(tester);
++
++    expect(find.byType(NavigationBar), findsOneWidget);
++    expect(find.byType(VerticalDivider), findsNothing);
++  });
++
++  testWidgets('En tablet, Agenda y Mi agenda se muestran lado a lado', (
++    tester,
++  ) async {
++    setScreenSize(tester, const Size(1280, 800));
++    await pumpLoadedApp(tester);
++
++    expect(find.byType(NavigationBar), findsNothing);
++    expect(find.byType(AgendaScreen), findsOneWidget);
++    expect(find.byType(MyAgendaScreen), findsOneWidget);
++    expect(find.text('0 sesiones'), findsOneWidget);
++
++    final agendaRect = tester.getRect(find.byType(AgendaScreen));
++    final myAgendaRect = tester.getRect(find.byType(MyAgendaScreen));
++    expect(agendaRect.right, lessThanOrEqualTo(myAgendaRect.left));
++
++    // Marcar una favorita en la agenda la muestra al instante en Mi agenda.
++    await tester.tap(
++      find
++          .descendant(
++            of: find.byType(AgendaScreen),
++            matching: find.byIcon(Icons.star_outline_rounded),
++          )
++          .first,
++    );
++    await tester.pumpAndSettle();
++
++    expect(find.text('1 sesión'), findsOneWidget);
++    expect(
++      find.descendant(
++        of: find.byType(MyAgendaScreen),
++        matching: find.byIcon(Icons.star_rounded),
++      ),
++      findsOneWidget,
++    );
++  });
+ }
