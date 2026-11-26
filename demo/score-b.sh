@@ -27,9 +27,11 @@ uses_lb=$(grep -cE 'LayoutBuilder|BoxConstraints|constraints\.maxWidth' <<<"$add
 bad_mq=$(grep -cE 'MediaQuery\.(sizeOf|of\(.*\)\.size)|\.size\.width|Platform\.|defaultTargetPlatform|isTablet|shortestSide' <<<"$added")
 c1=1; [[ $uses_lb -gt 0 && $bad_mq -eq 0 ]] && c1=0
 
-# 2. Sin literales en comparaciones de ancho.
+# 2. Umbral de ancho con nombre y sin literales en las comparaciones.
+#    (Independiente del criterio 1: no importa si el ancho sale de constraints o no.)
 magic=$(grep -cE '(maxWidth|width|Width)\s*(>=|<=|>|<)\s*[0-9]' <<<"$added")
-c2=1; [[ $magic -eq 0 && $uses_lb -gt 0 ]] && c2=0
+named=$(grep -cE 'const (double|int|num) \w*([Bb]reakpoint|[Ww]idth)\w*|Breakpoints?\.' <<<"$added")
+c2=1; [[ $magic -eq 0 && $named -gt 0 ]] && c2=0
 
 # 3. Ningún archivo con widgets lee el JSON.
 json_in_ui=0
@@ -59,7 +61,7 @@ score=$(( (c1==0) + (c2==0) + (c3==0) + (c4==0) + (c5==0) + (c6==0) ))
   echo "| # | Criterio | Resultado | Detalle |"
   echo "|---|---|---|---|"
   echo "| 1 | Layout por constraints | $(verdict $c1) | LayoutBuilder/constraints en el diff: $uses_lb · MediaQuery size/plataforma/dispositivo: $bad_mq |"
-  echo "| 2 | Breakpoints con nombre | $(verdict $c2) | comparaciones de ancho con literal: $magic (REVISAR el diff) |"
+  echo "| 2 | Breakpoints con nombre | $(verdict $c2) | umbral con nombre: $named · comparaciones de ancho con literal: $magic (REVISAR el diff) |"
   echo "| 3 | La UI no lee el JSON | $(verdict $c3) | archivos con widgets que leen el JSON: $json_in_ui |"
   echo "| 4 | Widget test nuevo | $(verdict $c4) | testWidgets( agregados: $new_tests |"
   echo "| 5 | Analyze sin errores | $(verdict $c5) | errores: $an_errors · $(tail -n 1 "$out/analyze.txt") |"
