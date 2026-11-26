@@ -46,7 +46,7 @@ Momento A y los criterios del Momento B, y el agente podría leerlos.
 | **A** | Contexto (MCP) | `demo-a-start` | `prompts/a.md` (app levantada a mano) | `dtd` connect → `get_runtime_errors` → `widget_inspector`; explica el `RenderFlex overflowed` apuntando al `Row` del título en `SessionCard`. No corrige. | 19 s (manual, 2026-11-25) |
 | **B** | Reglas (Rules + Skills) | `demo-b-start` | `prompts/b.md` | Mismo modelo y prompt, con y sin harness; se puntúa con `scorecard.md`. | _pendiente_ |
 | **C** | Iteración (Hot Reload) | `demo-a-start` | `prompts/setup.md` + `prompts/c.md` | `flutter-fix-layout-issues` → edita → `hot_reload` → `get_runtime_errors` vacío → árbol de widgets. Sin reiniciar la app. | 1 min 10 s (manual, 2026-11-25) |
-| **D** | Validación (Hooks + tests) | `demo-d-start` | `prompts/d.md` (app levantada a mano) | `flutter_driver_command` recorre la app → `flutter-add-integration-test` lo convierte en test en `integration_test/` → `run_tests` → Stop hook (analyze + tests). | _pendiente_ |
+| **D** | Validación (Hooks + tests) | `demo-d-start` | `prompts/d.md` (app levantada a mano) | `flutter_driver_command` recorre la app → `flutter-add-integration-test` lo convierte en test en `integration_test/` → `run_tests` → Stop hook (analyze + tests). | 4 min 29 s (manual, 2026-11-25) |
 
 ## La app la levanta el presentador
 
@@ -83,8 +83,12 @@ el agente edita, dispara `hot_reload` y vuelve a leer errores y árbol.
 
 **D — validación.** Antes del cronómetro se pega `prompts/setup.md` (ver abajo).
 Flutter Driver necesita la extensión habilitada: lo configura el skill
-`flutter-add-integration-test` durante el momento; lo que cambie queda documentado aquí
-después del ensayo.
+`flutter-add-integration-test` durante el momento. En la corrida del 2026-11-25 creó
+`test_driver/driver_main.dart` (con `enableFlutterDriverExtension()`) y
+`test_driver/integration_test.dart`, agregó `flutter_driver` e `integration_test` al
+`pubspec`, puso `ValueKey`s en el chip de filtro y en la estrella del detalle, y relanzó la
+app con `launch_app` (reemplaza la del presentador). Detalle en
+`evidence/f4-d-manual.md`.
 
 ## Archivos
 
