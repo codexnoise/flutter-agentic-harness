@@ -96,3 +96,15 @@ app con `launch_app` (reemplaza la del presentador). Detalle en
 - `prompts/*.md` — prompts exactos para pegar en escena.
 - `scorecard.md` — criterios binarios del Momento B (fijados antes de correr) y resultados.
 - `score-b.sh` — evalúa una toma de B y guarda diff, analyze, tests y puntaje.
+
+## Grabaciones (Fase 6)
+
+Videos de respaldo de los 4 momentos en `demo/recordings/` (ignorado por git): pantalla
+completa con el simulador y la terminal de Claude lado a lado.
+
+| Momento | Archivo | Duración del video crudo |
+|---|---|---|
+| A | | |
+| B | | |
+| C | | |
+| D | | |
